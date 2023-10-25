@@ -1,0 +1,57 @@
+Meta-Daten
+
+<cmdp:title level="m" type="main">Gnothi seauton. Nosce teipsum. Erkenne dich selbst</cmdp:title>
+<cmdp:title level="m" type="sub">
+
+<cmdp:author>
+<cmdp:persName><cmdp:surname>Weigel</cmdp:surname>
+<cmdp:forename>Valentin</cmdp:forename>
+            </cmdp:author>
+
+<cmdp:pubPlace>Neustadt</cmdp:pubPlace>
+            <cmdp:date type="publication">1615</cmdp:date><cmdp:publisher><cmdp:name>Knuber</cmdp:name></cmdp:publisher>
+
+<cmdp:language ident="deu">(Früh-)Neuhochdeutsch</cmdp:language>
+ <cmdp:classCode scheme="https://www.deutschestextarchiv.de/doku/klassifikation#dtamain">Gebrauchsliteratur</cmdp:classCode>
+        <cmdp:classCode scheme="https://www.deutschestextarchiv.de/doku/klassifikation#dtasub">Erbauungsliteratur</cmdp:classCode>
+        <cmdp:classCode scheme="https://www.deutschestextarchiv.de/doku/klassifikation#dwds1main">Gebrauchsliteratur</cmdp:classCode>
+        <cmdp:classCode scheme="https://www.deutschestextarchiv.de/doku/klassifikation#dwds1sub">Andachtsbuch</cmdp:classCode>
+
+########################################################################
+Annotationen
+
+- Token + ID
+- Lemma
+- POS-Tag
+- Correction
+- Saetze + ID
+
+Plan:
+1. pickle-Objekt
+2. csv-Exportformat
+
+########################################################################
+Outputformat Metadaten:
+
+# author_surname=... author_firstname=... publPlace=... date=....
+# textClass_dtamain=.... textClass_dtasub=...
+
+
+Outputformat Annotationen:
+
+S_ID  T_ID  Token_corr  Token_orig  Lemma   POS
+      	    - corr	- orig      
+	    - orig      - orig
+
+########################################################################
+Gruppen
+
+1. Metadaten			Chandler, Vogel
+
+2. Annotationen			Musavi, Incirkus, Müller
+
+3. Versuch-Items generieren	Lange, Kim, Schellenberg
+- Input: csv-Datei + Lemma + n
+- Output: Versuchs-Items + n Saetze Kontext (n: noch bestimmen)
+
+
