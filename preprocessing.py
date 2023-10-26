@@ -31,6 +31,7 @@ def save_metadata(dict_metadata: Dict[str, Any], output_dir: str) -> None:
         Returns:
              None
     """
+    pass
 
 if __name__ == "__main__":
     xml_file_path: str = "data/xml/brockes_vergnuegen03_1730.tcf.xml"
