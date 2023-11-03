@@ -93,11 +93,16 @@ def get_metadata(xml_tree_data: ET.ElementTree) -> Dict[str, Any]:
     root_data[MetaInformation.PUB_DATE.value] = pub_date
     root_data[MetaInformation.PUB_NAME.value] = pub_name
 
-    # Save Textclass data
+    # Save textClass data
     for child in root.findall(".//cmdp:classCode", xml_namespaces):
         scheme = child.get("scheme")
         scheme_data, scheme_text = scheme.split("#")[1], child.text
-        root_data[f"textClass_{scheme_data}"] = scheme_text
+        if f"textClass_{scheme_data}" not in root_data.keys():
+            root_data[f"textClass_{scheme_data}"] = scheme_text
+        else:
+            root_data[
+                f"textClass_{scheme_data}"
+            ] = f'{root_data[f"textClass_{scheme_data}"]},{scheme_text}'
 
     return root_data
 
