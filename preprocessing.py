@@ -3,8 +3,8 @@ import argparse
 import os
 import pickle
 import xml.etree.ElementTree as ET
-
-from typing import Dict, Any
+from enum import Enum
+from typing import Any, Dict
 
 # Pip
 # None
@@ -22,8 +22,15 @@ The following data points are saved:
 - Publication date
 - Publication name
 - Text classifications (according to the XML tags specified in the resource directory)
-
 """
+
+
+class MetaInformation(Enum):
+    AUTHOR_SURNAME = "author_surname"
+    AUTHOR_FORENAME = "author_forename"
+    PUB_NAME = "pub_name"
+    PUB_PLACE = "pub_place"
+    PUB_DATE = "pub_date"
 
 
 def load_xml(path_to_xml_file: str) -> ET.ElementTree:
@@ -60,54 +67,44 @@ def get_metadata(xml_tree_data: ET.ElementTree) -> Dict[str, Any]:
     }
 
     # Extracting metadata
-    def xml_basic_data(xml_tag: str) -> list:
-        """
-        Extract data for a given XML tag.
-
-        Args:
-            xml_tag (str): The XML tag to extract data for.
-
-        Returns:
-            list: A list of extracted data.
-        """
-        tag_search = root.findall(f".//cmdp:{xml_tag}", xml_namespaces)
-        tag_search_results = [tag_child.text for tag_child in tag_search]
-        return tag_search_results
-
     # Author name data
-    forename_results = root.findall(".//cmdp:forename", xml_namespaces)
-    surename_results = root.findall(".//cmdp:surname", xml_namespaces)
-
-    author_counter = 0
-    for forename, surename in zip(forename_results, surename_results):
-        root_data[f"author_{author_counter}"] = {
-            "forename": forename.text,
-            "surname": surename.text,
-        }
-        author_counter += 1
+    author_surname = root.find(
+        ".//cmdp:author/cmdp:persName/cmdp:surname", xml_namespaces
+    ).text
+    author_forename = root.find(
+        ".//cmdp:author/cmdp:persName/cmdp:forename", xml_namespaces
+    ).text
+    root_data[MetaInformation.AUTHOR_SURNAME.value] = author_surname
+    root_data[MetaInformation.AUTHOR_FORENAME.value] = author_forename
 
     # Publishing data
-    pub_place = xml_basic_data("pubPlace")
-    pub_date = xml_basic_data("date")
-    pub_name = xml_basic_data("name")
+    pub_place = root.find(
+        ".//cmdp:sourceDesc/cmdp:biblFull/cmdp:publicationStmt/cmdp:pubPlace",
+        xml_namespaces,
+    ).text
+    pub_date = root.find(
+        ".//cmdp:sourceDesc/cmdp:biblFull/cmdp:publicationStmt/cmdp:date",
+        xml_namespaces,
+    ).text
+    pub_name = root.find(".//cmdp:sourceDesc/cmdp:bibl", xml_namespaces).text
 
     # Save publishing data
-    root_data["pub_place"] = pub_place
-    root_data["pub_date"] = pub_date
-    root_data["pub_name"] = pub_name
+    root_data[MetaInformation.PUB_PLACE.value] = pub_place
+    root_data[MetaInformation.PUB_DATE.value] = pub_date
+    root_data[MetaInformation.PUB_NAME.value] = pub_name
 
     # Save Textclass data
     for child in root.findall(".//cmdp:classCode", xml_namespaces):
         scheme = child.get("scheme")
         scheme_data, scheme_text = scheme.split("#")[1], child.text
-        root_data[scheme_data] = scheme_text
+        root_data[f"textClass_{scheme_data}"] = scheme_text
 
     return root_data
 
 
 def save_metadata(
     xml_metadata: Dict[str, Any],
-    output_dir: str = "xml_extracted_data",
+    output_dir: str = ".",
     save_file_name: str = None,
 ) -> None:
     """
@@ -130,44 +127,44 @@ def save_metadata(
 
     rel_file_name = split_file_elements[1]
 
-    # Save data as pickle
+    # Serialize data as pickle object
     pickle_name = f"{output_dir}/{rel_file_name}.pkl"
     pickle.dump(xml_metadata, open(pickle_name, mode="wb"))
 
-    # Save data as txt
-    txt_results = list()
-    for item in xml_metadata:
-        if "author" in item:
-            forename, surname = xml_metadata.get(item).values()
-            author = f"{item}={forename}_{surname}"
-            txt_results.append(author)
+    # Define order of meta data
+    string_author_surname = "#author_surname={}"
+    string_author_forename = "#author_forename={}"
+    string_pub_name = "#pub_name={}"
+    string_pub_place = "#pub_place={}"
+    string_pub_date = "#pub_date={}"
+    strings_text_class = []
 
+    # Write meta information to text file
+    for key, value in xml_metadata.items():
+        if key == MetaInformation.AUTHOR_SURNAME.value:
+            string_author_surname = string_author_surname.format(value)
+        elif key == MetaInformation.AUTHOR_FORENAME.value:
+            string_author_forename = string_author_forename.format(value)
+        elif key == MetaInformation.PUB_NAME.value:
+            string_pub_name = string_pub_name.format(value)
+        elif key == MetaInformation.PUB_PLACE.value:
+            string_pub_place = string_pub_place.format(value)
+        elif key == MetaInformation.PUB_DATE.value:
+            string_pub_date = string_pub_date.format(value)
         else:
-            if isinstance(xml_metadata.get(item), list):
-                pub_date_data = "_".join(xml_metadata.get(item))
-            else:
-                pub_date_data = xml_metadata.get(item)
-            data_point = f"{item}={pub_date_data}"
-            txt_results.append(data_point)
+            strings_text_class.append(f"#{key}={value}")
 
-    text_writer = open(f"{output_dir}/{rel_file_name}.txt", mode="w+", encoding="utf-8")
+    meta_data_out = [
+        string_author_surname,
+        string_author_forename,
+        string_pub_name,
+        string_pub_place,
+        string_pub_date,
+    ] + sorted(strings_text_class)
 
-    # Create multiple rows each containing only three elements
-    # so that the rows are not longer than 80 characters
-    row = int(len(txt_results) / 3)
-    row_end_counter = 3
-
-    for i in range(row):
-        row_start_counter = i * 3
-        row_start, row_end = row_start_counter, row_end_counter
-        row_results = txt_results[row_start:row_end]
-
-        # Add '#' to each row so that it is read as a comment
-        results = ",".join(row_results)
-        txt = f"# {results} \n"
-        text_writer.write(txt)
-
-        row_end_counter += 3
+    with open(f"{output_dir}/{rel_file_name}.txt", "w") as f:
+        for meta_datum in meta_data_out:
+            print(meta_datum, file=f)
 
 
 def run_meta_data_extraction(xml_file_path):
@@ -186,7 +183,6 @@ def run_meta_data_extraction(xml_file_path):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(
         prog="XML-DTA", description="Extract XML data from the file"
     )
@@ -196,15 +192,26 @@ if __name__ == "__main__":
     parser.add_argument(
         "-s", "--show_data", type=str, help="Read in XML file and show data"
     )
-
+    parser.add_argument(
+        "-o",
+        "--output_filename",
+        type=str,
+        help="Name of the output txt and pickle files",
+    )
     args = parser.parse_args()
-
     # Extract data
     if args.extract_data:
         file_name = args.extract_data
-        run_meta_data_extraction(file_name)
-        print(f"The XML-data from {file_name} was extracted and saved.")
-
+        if args.output_filename:
+            run_meta_data_extraction(file_name, args.output_filename)
+            print(
+                f"The XML-data from {file_name} was extracted and saved to {args.output_filename}."
+            )
+        else:
+            run_meta_data_extraction(file_name)
+            print(
+                f"The XML-data from {file_name} was extracted and saved in current working directory. "
+            )
     # Show data, but do not save it
     if args.show_data:
         xml_tree: ET.ElementTree = load_xml(args.show_data)
