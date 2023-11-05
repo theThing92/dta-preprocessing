@@ -49,6 +49,20 @@ file_path: str = "data/xml/brockes_vergnuegen03_1730.tcf.xml"
 run_meta_data_extraction(file_path)
 ```
 
+### Beispiel-Output
+```
+#author_surname=Mommsen
+#author_forename=Theodor
+#pub_name=Mommsen, Theodor: Römische Geschichte. Bd. 3: Von Sullas Tode bis ....
+#pub_place=Leipzig
+#pub_date=1856
+#textClass_DTACorpus=core,ready,mts
+#textClass_dtamain=Fachtext
+#textClass_dtasub=Historiographie
+#textClass_dwds1main=Wissenschaft
+#textClass_dwds1sub=Historiographie
+```
+
 # Gruppe 
 - Maurice Vogel
 - Christopher Chandler 

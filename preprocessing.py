@@ -1,5 +1,6 @@
 # Standard
 import argparse
+import logging
 import os
 import pickle
 import xml.etree.ElementTree as ET
@@ -31,6 +32,12 @@ class MetaInformation(Enum):
     PUB_NAME = "pub_name"
     PUB_PLACE = "pub_place"
     PUB_DATE = "pub_date"
+
+
+# Create a basic logger
+logging.basicConfig(
+    filename="app.log", filemode="w", format="%(name)s - %(levelname)s - %(message)s"
+)
 
 
 def load_xml(path_to_xml_file: str) -> ET.ElementTree:
@@ -68,14 +75,19 @@ def get_metadata(xml_tree_data: ET.ElementTree) -> Dict[str, Any]:
 
     # Extracting metadata
     # Author name data
-    author_surname = root.find(
-        ".//cmdp:author/cmdp:persName/cmdp:surname", xml_namespaces
-    ).text
-    author_forename = root.find(
-        ".//cmdp:author/cmdp:persName/cmdp:forename", xml_namespaces
-    ).text
-    root_data[MetaInformation.AUTHOR_SURNAME.value] = author_surname
-    root_data[MetaInformation.AUTHOR_FORENAME.value] = author_forename
+
+    try:
+        author_surname = root.find(
+            ".//cmdp:author/cmdp:persName/cmdp:surname", xml_namespaces
+        ).text
+        author_forename = root.find(
+            ".//cmdp:author/cmdp:persName/cmdp:forename", xml_namespaces
+        ).text
+        root_data[MetaInformation.AUTHOR_SURNAME.value] = author_surname
+        root_data[MetaInformation.AUTHOR_FORENAME.value] = author_forename
+
+    except AttributeError as e:
+        logging.error(e)
 
     # Publishing data
     pub_place = root.find(
@@ -136,7 +148,7 @@ def save_metadata(
     pickle_name = f"{output_dir}/{rel_file_name}.pkl"
     pickle.dump(xml_metadata, open(pickle_name, mode="wb"))
 
-    # Define order of meta data
+    # Define order of metadata
     string_author_surname = "#author_surname={}"
     string_author_forename = "#author_forename={}"
     string_pub_name = "#pub_name={}"

@@ -23,10 +23,10 @@ class TestXMLDataExtraction(unittest.TestCase):
 
         This test case iterates through the list of DTA files and runs the
         'run_meta_data_extraction' function on each file to extract metadata.
-        The test is successful if the data of every file can be extractd.
+        The test is successful if the data of every file can be extracted.
         """
 
-        dta_files = glob.glob("dta_selection/*")
+        dta_files = glob.glob("data/xml/*")
 
         for row in dta_files:
             run_meta_data_extraction(row)
