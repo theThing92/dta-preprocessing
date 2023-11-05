@@ -211,23 +211,23 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-o",
-        "--output_filename",
+        "--output_directory",
         type=str,
-        help="Name of the output txt and pickle files",
+        help="Name of the output directory for txt and pickle files",
     )
     args = parser.parse_args()
     # Extract data
     if args.extract_data:
         file_name = args.extract_data
         if args.output_filename:
-            run_meta_data_extraction(file_name, args.output_filename)
+            run_meta_data_extraction(file_name, args.output_directory)
             print(
-                f"The XML-data from {file_name} was extracted and saved to {args.output_filename}."
+                f"The XML-data from {file_name} was extracted and saved to {args.output_directory}."
             )
         else:
             run_meta_data_extraction(file_name)
             print(
-                f"The XML-data from {file_name} was extracted and saved in current working directory. "
+                f"The XML-data from {file_name} was extracted and saved in the current working directory."
             )
     # Show data, but do not save it
     if args.show_data:
