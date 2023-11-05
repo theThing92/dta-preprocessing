@@ -181,16 +181,18 @@ def save_metadata(
     ] + sorted(strings_text_class)
 
     # Write meta information to txt file
+
     with open(f"{output_dir}/{rel_file_name}.txt", "w") as f:
         for meta_datum in meta_data_out:
             print(meta_datum, file=f)
 
 
-def run_meta_data_extraction(xml_file_path):
+def run_meta_data_extraction(xml_file_path: str, output_directory: str):
     """
     Load an XML file, extract metadata, and save it to files.
 
     Args:
+        output_directory (str): Name of the output directory for the .txt and pickle files
         xml_file_path (str): Path to the XML file to extract metadata from.
 
     Returns:
@@ -198,7 +200,12 @@ def run_meta_data_extraction(xml_file_path):
     """
     xml_data: ET.ElementTree = load_xml(xml_file_path)
     xml_metadata = get_metadata(xml_data)
-    save_metadata(xml_metadata, save_file_name=xml_file_path)
+
+    save_metadata(
+        xml_metadata=xml_metadata,
+        output_dir=output_directory,
+        save_file_name=xml_file_path,
+    )
 
 
 if __name__ == "__main__":
@@ -215,21 +222,22 @@ if __name__ == "__main__":
         "-o",
         "--output_directory",
         type=str,
-        help="Name of the output directory for txt and pickle files",
+        help="Name of the output directory for the .txt and pickle files",
     )
     args = parser.parse_args()
     # Extract data
     if args.extract_data:
         file_name = args.extract_data
-        if args.output_filename:
+        if args.output_directory:
             run_meta_data_extraction(file_name, args.output_directory)
             print(
                 f"The XML-data from {file_name} was extracted and saved to {args.output_directory}."
             )
         else:
-            run_meta_data_extraction(file_name)
+            run_meta_data_extraction(file_name, os.getcwd())
             print(
-                f"The XML-data from {file_name} was extracted and saved in the current working directory."
+                f"The XML-data from {file_name} was extracted and saved in the "
+                f"current working directory. "
             )
     # Show data, but do not save it
     if args.show_data:
