@@ -29,17 +29,17 @@ und die Daten anzeigen, ohne sie zu speichern.
 Beispiel:
 
 ```bash
-python preprocessing.py -x dta_selection/brockes_vergnuegen03_1730.tcf.xml
+python preprocessing.py -x data/xml/brockes_vergnuegen03_1730.tcf.xml
 ```
 
 Dieser Befehl liest die XML-Datei `meine_xml_datei.xml` ein, 
 extrahiert die Daten und speichert sie in einer .txt-Datei und einem gepickelten dict.
 
 ```bash
-python preprocessing.py -s dta_selection/brockes_vergnuegen03_1730.tcf.xml
+python preprocessing.py -s data/xml/brockes_vergnuegen03_1730.tcf.xml
 ```
 
-Dieser Befehl liest die XML-Datei `dta_selection/brockes_vergnuegen03_1730.tcf.xml` ein 
+Dieser Befehl liest die XML-Datei `data/xml/brockes_vergnuegen03_1730.tcf.xml` ein 
 und zeigt die Daten in der Konsole an, ohne sie zu speichern.
  
 ### Modul 
