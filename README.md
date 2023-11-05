@@ -19,6 +19,7 @@ Um das Programm auszufuehren, kann man die folgenden Befehlszeilenoptionen verwe
 und die Daten extrahieren und speichern.
 - `-s` oder `--show_data`: Mit dieser Option kann man eine XML-Datei einlesen
 und die Daten anzeigen, ohne sie zu speichern.
+- `-o` oder `--output_directory`: Mit dieser Option kann das Output Verzeichnis zum Speichern der XML- und Text-Dateien angegeben werden.
 
 ## Anleitung
 
@@ -32,7 +33,7 @@ Beispiel:
 python preprocessing.py -x data/xml/brockes_vergnuegen03_1730.tcf.xml
 ```
 
-Dieser Befehl liest die XML-Datei `meine_xml_datei.xml` ein, 
+Dieser Befehl liest die XML-Datei `data/xml/brockes_vergnuegen03_1730.tcf.xml` ein, 
 extrahiert die Daten und speichert sie in einer .txt-Datei und einem gepickelten dict.
 
 ```bash
@@ -41,10 +42,18 @@ python preprocessing.py -s data/xml/brockes_vergnuegen03_1730.tcf.xml
 
 Dieser Befehl liest die XML-Datei `data/xml/brockes_vergnuegen03_1730.tcf.xml` ein 
 und zeigt die Daten in der Konsole an, ohne sie zu speichern.
+
+```bash
+python preprocessing.py -x data/xml/brockes_vergnuegen03_1730.tcf.xml -o my/custom/directory
+```
+
+Dieser Befehl liest die XML-Datei `data/xml/brockes_vergnuegen03_1730.tcf.xml` ein, 
+extrahiert die Daten und speichert sie in einer .txt-Datei und einem gepickelten dict unter my/custom/directory.
  
 ### Modul 
 Alternativ kann man die folgenden Funktionen ausfuehren:
 ```
+from preprocessing import run_meta_data_extraction
 file_path: str = "data/xml/brockes_vergnuegen03_1730.tcf.xml"
 run_meta_data_extraction(file_path)
 ```
