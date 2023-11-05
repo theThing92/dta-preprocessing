@@ -142,21 +142,21 @@ def save_metadata(
 
     split_file_elements = os.path.splitext(file)[0].split(delimiter)
 
-    rel_file_name = split_file_elements[1]
+    rel_file_name = split_file_elements[-1]
 
     # Serialize data as pickle object
     pickle_name = f"{output_dir}/{rel_file_name}.pkl"
     pickle.dump(xml_metadata, open(pickle_name, mode="wb"))
 
-    # Define order of metadata
-    string_author_surname = "#author_surname={}"
-    string_author_forename = "#author_forename={}"
-    string_pub_name = "#pub_name={}"
-    string_pub_place = "#pub_place={}"
-    string_pub_date = "#pub_date={}"
+    # Define output template strings for meta information
+    string_author_surname = f"#{MetaInformation.AUTHOR_SURNAME.value}" + "={}"
+    string_author_forename = f"#{MetaInformation.AUTHOR_FORENAME.value}" + "={}"
+    string_pub_name = f"#{MetaInformation.PUB_NAME.value}" + "={}"
+    string_pub_place = f"#{MetaInformation.PUB_PLACE.value}" + "={}"
+    string_pub_date = f"#{MetaInformation.PUB_DATE.value}" + "={}"
     strings_text_class = []
 
-    # Write meta information to text file
+    # Write meta data values as list items for ordering
     for key, value in xml_metadata.items():
         if key == MetaInformation.AUTHOR_SURNAME.value:
             string_author_surname = string_author_surname.format(value)
@@ -171,6 +171,7 @@ def save_metadata(
         else:
             strings_text_class.append(f"#{key}={value}")
 
+    # Define output order for text file
     meta_data_out = [
         string_author_surname,
         string_author_forename,
@@ -179,6 +180,7 @@ def save_metadata(
         string_pub_date,
     ] + sorted(strings_text_class)
 
+    # Write meta information to txt file
     with open(f"{output_dir}/{rel_file_name}.txt", "w") as f:
         for meta_datum in meta_data_out:
             print(meta_datum, file=f)
