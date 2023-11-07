@@ -44,7 +44,7 @@ Dieser Befehl liest die XML-Datei `data/xml/brockes_vergnuegen03_1730.tcf.xml` e
 und zeigt die Daten in der Konsole an, ohne sie zu speichern.
 
 ```bash
-python preprocessing.py -x data/xml/brockes_vergnuegen03_1730.tcf.xml -o my/custom/directory
+python preprocessing.py -x data/xml/brockes_vergnuegen03_1730.tcf.xml -o xml_extracted_data
 ```
 
 Dieser Befehl liest die XML-Datei `data/xml/brockes_vergnuegen03_1730.tcf.xml` ein, 
