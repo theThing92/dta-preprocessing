@@ -1,4 +1,5 @@
 # Standard
+import sys
 import argparse
 import logging
 import os
@@ -34,9 +35,13 @@ class MetaInformation(Enum):
     PUB_DATE = "pub_date"
 
 
+DATA_MISSING = "NA"
+
 # Create a basic logger
 logging.basicConfig(
-    filename="app.log", filemode="w", format="%(name)s - %(levelname)s - %(message)s"
+    stream=sys.stdout,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
 )
 
 
@@ -80,26 +85,47 @@ def get_metadata(xml_tree_data: ET.ElementTree) -> Dict[str, Any]:
         author_surname = root.find(
             ".//cmdp:author/cmdp:persName/cmdp:surname", xml_namespaces
         ).text
+    except AttributeError:
+        author_surname = DATA_MISSING
+        logging.info(
+            f"No surname for author could be found, setting as {DATA_MISSING}."
+        )
+
+    try:
         author_forename = root.find(
             ".//cmdp:author/cmdp:persName/cmdp:forename", xml_namespaces
         ).text
-        root_data[MetaInformation.AUTHOR_SURNAME.value] = author_surname
-        root_data[MetaInformation.AUTHOR_FORENAME.value] = author_forename
+    except AttributeError:
+        author_forename = DATA_MISSING
+        logging.info(
+            f"No forename for author could be found, setting as {DATA_MISSING}."
+        )
 
-    except AttributeError as e:
-        logging.error(e)
+    root_data[MetaInformation.AUTHOR_SURNAME.value] = author_surname
+    root_data[MetaInformation.AUTHOR_FORENAME.value] = author_forename
 
     # Publishing data
-    pub_place = root.find(
-        ".//cmdp:sourceDesc/cmdp:biblFull/cmdp:publicationStmt/cmdp:pubPlace",
-        xml_namespaces,
-    ).text
-    pub_date = root.find(
-        ".//cmdp:sourceDesc/cmdp:biblFull/cmdp:publicationStmt/cmdp:date",
-        xml_namespaces,
-    ).text
-    pub_name = root.find(".//cmdp:sourceDesc/cmdp:bibl", xml_namespaces).text
-
+    try:
+        pub_place = root.find(
+            ".//cmdp:sourceDesc/cmdp:biblFull/cmdp:publicationStmt/cmdp:pubPlace",
+            xml_namespaces,
+        ).text
+    except AttributeError:
+        logging.info(f"No publication place could be found, setting as {DATA_MISSING}.")
+        pub_place = DATA_MISSING
+    try:
+        pub_date = root.find(
+            ".//cmdp:sourceDesc/cmdp:biblFull/cmdp:publicationStmt/cmdp:date",
+            xml_namespaces,
+        ).text
+    except AttributeError:
+        logging.info(f"No publication date could be found, setting as {DATA_MISSING}.")
+        pub_date = DATA_MISSING
+    try:
+        pub_name = root.find(".//cmdp:sourceDesc/cmdp:bibl", xml_namespaces).text
+    except AttributeError:
+        logging.info(f"No publication name could be found, setting as {DATA_MISSING}.")
+        pub_name = DATA_MISSING
     # Save publishing data
     root_data[MetaInformation.PUB_PLACE.value] = pub_place
     root_data[MetaInformation.PUB_DATE.value] = pub_date
@@ -187,7 +213,7 @@ def save_metadata(
             print(meta_datum, file=f)
 
 
-def run_meta_data_extraction(xml_file_path: str, output_directory: str):
+def run_meta_data_extraction(xml_file_path: str, output_directory: str) -> None:
     """
     Load an XML file, extract metadata, and save it to files.
 
@@ -198,6 +224,7 @@ def run_meta_data_extraction(xml_file_path: str, output_directory: str):
     Returns:
         None
     """
+    logging.info(f"Processing xml file {xml_file_path}...")
     xml_data: ET.ElementTree = load_xml(xml_file_path)
     xml_metadata = get_metadata(xml_data)
 
@@ -230,18 +257,19 @@ if __name__ == "__main__":
         file_name = args.extract_data
         if args.output_directory:
             run_meta_data_extraction(file_name, args.output_directory)
-            print(
+            logging.info(
                 f"The XML-data from {file_name} was extracted and saved to {args.output_directory}."
             )
         else:
             run_meta_data_extraction(file_name, os.getcwd())
-            print(
+            logging.info(
                 f"The XML-data from {file_name} was extracted and saved in the "
                 f"current working directory. "
             )
     # Show data, but do not save it
     if args.show_data:
+        logging.info(f"Processing xml file {args.show_data}...")
         xml_tree: ET.ElementTree = load_xml(args.show_data)
         xml_meta_data = get_metadata(xml_tree)
-        for data in xml_meta_data:
-            print(data, xml_meta_data.get(data))
+        for meta_datum in xml_meta_data:
+            print(f"#{meta_datum}={xml_meta_data.get(meta_datum)}")
