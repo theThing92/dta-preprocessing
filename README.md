@@ -30,21 +30,21 @@ und die Daten anzeigen, ohne sie zu speichern.
 Beispiel:
 
 ```bash
-python preprocessing.py -x data/xml/brockes_vergnuegen03_1730.tcf.xml
+python3 preprocessing.py -x data/xml/brockes_vergnuegen03_1730.tcf.xml
 ```
 
 Dieser Befehl liest die XML-Datei `data/xml/brockes_vergnuegen03_1730.tcf.xml` ein, 
 extrahiert die Daten und speichert sie in einer .txt-Datei und einem gepickelten dict.
 
 ```bash
-python preprocessing.py -s data/xml/brockes_vergnuegen03_1730.tcf.xml
+python3 preprocessing.py -s data/xml/brockes_vergnuegen03_1730.tcf.xml
 ```
 
 Dieser Befehl liest die XML-Datei `data/xml/brockes_vergnuegen03_1730.tcf.xml` ein 
 und zeigt die Daten in der Konsole an, ohne sie zu speichern.
 
 ```bash
-python preprocessing.py -x data/xml/brockes_vergnuegen03_1730.tcf.xml -o xml_extracted_data
+python3 preprocessing.py -x data/xml/brockes_vergnuegen03_1730.tcf.xml -o xml_extracted_data
 ```
 
 Dieser Befehl liest die XML-Datei `data/xml/brockes_vergnuegen03_1730.tcf.xml` ein, 
@@ -71,6 +71,18 @@ run_meta_data_extraction(file_path)
 #textClass_dwds1main=Wissenschaft
 #textClass_dwds1sub=Historiographie
 ```
+
+### Verarbeitung von Daten mit multiprocessing (WIP)
+Die DTA Input Daten in einem Verzeichnis können parallel verarbeitet werden. Für mögliche Optionen des Skripts, siehe:
+```bash
+python3 process_documents.py --help
+```
+Ausführung des Skripts:
+```bash
+python3 process_documents.py your/input/directory /your/output/directory
+```
+TODO: Vorverarbeitungsskripte der anderen Gruppen anbinden.
+
 
 # Gruppe 
 - Maurice Vogel
