@@ -72,7 +72,7 @@ run_meta_data_extraction(file_path)
 #textClass_dwds1sub=Historiographie
 ```
 
-### Verarbeitung von Daten mit multiprocessing (WIP)
+### Vorverarbeitung der Daten mit multiprocessing (WIP)
 Die DTA Input Daten in einem Verzeichnis können parallel verarbeitet werden. Für mögliche Optionen des Skripts, siehe:
 ```bash
 python3 process_documents.py --help
