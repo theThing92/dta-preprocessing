@@ -1,0 +1,33 @@
+TODOS:
+Christopher:
+
+Input:
+epoch["E2"] = { filename1, filename2, .... }
+epoch["E4"] = { filename1, filename2, .... }
+
+Datenpunkt: 2 zufallsausgewaehlte Dateinamen aus den Epochen E2/E4
+- unterschiedliche Dateinamen
+- mit seed arbeiten
+1000 Datenpunkte aus E2+E2
+1000 Datenpunkte aus E4+E4
+2000 Datenpunkte aus E2+E4
+
+Output:
+E2+E2: 1000 Tuples (file1,file2)
+...
+
+---------------------------------------
+Won + Sophia
+
+Input:
+E2+E2: 1000 Tuples (file1,file2)
+...
+
+Output:
+15x Satzpaare (je 5 Tuple pro Satz) mit "Zufall" aus E2+E2
+15x Satzpaare mit "Zufall" aus E4+E4
+30x Satzpaare mit "Zufall" aus E2+E4
++ fuer Log-Datei: Target (Lemma) + Kategorie ("E2+E2") + filename + sentID vom Targetwort
+
+15x Satzpaare mit "Kind" auz E2+E2
+...

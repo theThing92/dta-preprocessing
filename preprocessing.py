@@ -1,18 +1,22 @@
 # Standard
-import sys
 import argparse
-import logging
+import sys
 import os
 import pickle
 import xml.etree.ElementTree as ET
-from enum import Enum
+
 from typing import Any, Dict
 
 # Pip
 # None
 
 # Custom
-# None
+from constants.meta_constants import MetaInformation
+from logger.basic_logger import log_output
+
+
+__author__ = "Christopher Chandler", "Maurice Vogel"
+
 
 """
 This program reads in an XML file from the DTA and extracts the necessary XML data from 
@@ -25,24 +29,6 @@ The following data points are saved:
 - Publication name
 - Text classifications (according to the XML tags specified in the resource directory)
 """
-
-
-class MetaInformation(Enum):
-    AUTHOR_SURNAME = "author_surname"
-    AUTHOR_FORENAME = "author_forename"
-    PUB_NAME = "pub_name"
-    PUB_PLACE = "pub_place"
-    PUB_DATE = "pub_date"
-
-
-DATA_MISSING = "NA"
-
-# Create a basic logger
-logging.basicConfig(
-    stream=sys.stdout,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
-)
 
 
 def load_xml(path_to_xml_file: str) -> ET.ElementTree:
@@ -86,9 +72,9 @@ def get_metadata(xml_tree_data: ET.ElementTree) -> Dict[str, Any]:
             ".//cmdp:author/cmdp:persName/cmdp:surname", xml_namespaces
         ).text
     except AttributeError:
-        author_surname = DATA_MISSING
-        logging.info(
-            f"No surname for author could be found, setting as {DATA_MISSING}."
+        author_surname = MetaInformation.DATA_MISSING.value
+        log_output(
+            f"No surname for author could be found, setting as {MetaInformation.DATA_MISSING.value}."
         )
 
     try:
@@ -96,9 +82,9 @@ def get_metadata(xml_tree_data: ET.ElementTree) -> Dict[str, Any]:
             ".//cmdp:author/cmdp:persName/cmdp:forename", xml_namespaces
         ).text
     except AttributeError:
-        author_forename = DATA_MISSING
-        logging.info(
-            f"No forename for author could be found, setting as {DATA_MISSING}."
+        author_forename = MetaInformation.DATA_MISSING.value
+        log_output(
+            f"No forename for author could be found, setting as {MetaInformation.DATA_MISSING.value}."
         )
 
     root_data[MetaInformation.AUTHOR_SURNAME.value] = author_surname
@@ -111,21 +97,27 @@ def get_metadata(xml_tree_data: ET.ElementTree) -> Dict[str, Any]:
             xml_namespaces,
         ).text
     except AttributeError:
-        logging.info(f"No publication place could be found, setting as {DATA_MISSING}.")
-        pub_place = DATA_MISSING
+        log_output(
+            f"No publication place could be found, setting as {MetaInformation.DATA_MISSING.value}."
+        )
+        pub_place = MetaInformation.DATA_MISSING.value
     try:
         pub_date = root.find(
             ".//cmdp:sourceDesc/cmdp:biblFull/cmdp:publicationStmt/cmdp:date",
             xml_namespaces,
         ).text
     except AttributeError:
-        logging.info(f"No publication date could be found, setting as {DATA_MISSING}.")
-        pub_date = DATA_MISSING
+        log_output(
+            f"No publication date could be found, setting as {MetaInformation.DATA_MISSING.value}."
+        )
+        pub_date = MetaInformation.DATA_MISSING.value
     try:
         pub_name = root.find(".//cmdp:sourceDesc/cmdp:bibl", xml_namespaces).text
     except AttributeError:
-        logging.info(f"No publication name could be found, setting as {DATA_MISSING}.")
-        pub_name = DATA_MISSING
+        log_output(
+            f"No publication name could be found, setting as {MetaInformation.DATA_MISSING.value}."
+        )
+        pub_name = MetaInformation.DATA_MISSING.value
     # Save publishing data
     root_data[MetaInformation.PUB_PLACE.value] = pub_place
     root_data[MetaInformation.PUB_DATE.value] = pub_date
@@ -169,6 +161,10 @@ def save_metadata(
     split_file_elements = os.path.splitext(file)[0].split(delimiter)
 
     rel_file_name = split_file_elements[-1]
+
+    # Create path if it does not exist
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     # Serialize data as pickle object
     pickle_name = f"{output_dir}/{rel_file_name}.pkl"
@@ -224,7 +220,7 @@ def run_meta_data_extraction(xml_file_path: str, output_directory: str) -> None:
     Returns:
         None
     """
-    logging.info(f"Processing xml file {xml_file_path}...")
+    log_output(f"Processing xml file {xml_file_path}...")
     xml_data: ET.ElementTree = load_xml(xml_file_path)
     xml_metadata = get_metadata(xml_data)
 
@@ -257,18 +253,18 @@ if __name__ == "__main__":
         file_name = args.extract_data
         if args.output_directory:
             run_meta_data_extraction(file_name, args.output_directory)
-            logging.info(
+            log_output(
                 f"The XML-data from {file_name} was extracted and saved to {args.output_directory}."
             )
         else:
             run_meta_data_extraction(file_name, os.getcwd())
-            logging.info(
+            log_output(
                 f"The XML-data from {file_name} was extracted and saved in the "
                 f"current working directory. "
             )
     # Show data, but do not save it
     if args.show_data:
-        logging.info(f"Processing xml file {args.show_data}...")
+        log_output(f"Processing xml file {args.show_data}...")
         xml_tree: ET.ElementTree = load_xml(args.show_data)
         xml_meta_data = get_metadata(xml_tree)
         for meta_datum in xml_meta_data:
