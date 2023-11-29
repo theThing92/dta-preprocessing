@@ -62,9 +62,17 @@ if __name__ == "__main__":
     with mp.Pool(processes=args.num_processes) as pool:
         log_msg_start = "Start multiprocessing for DTA files in {} with {} processes and function '{}'."
         if args.num_processes:
-            logging.info(log_msg_start.format(args.input_directory, args.num_processes, args.function))
+            logging.info(
+                log_msg_start.format(
+                    args.input_directory, args.num_processes, args.function
+                )
+            )
         else:
-            logging.info(log_msg_start.format(args.input_directory, os.cpu_count(), args.function))
+            logging.info(
+                log_msg_start.format(
+                    args.input_directory, os.cpu_count(), args.function
+                )
+            )
         files = os.listdir(args.input_directory)
         file_paths = [
             os.path.abspath(os.path.join(args.input_directory, file_name))
@@ -92,7 +100,10 @@ if __name__ == "__main__":
             )
 
         elif args.function == PreprocessingFunctions.epochs.value:
-            extract_epochs(args.input_directory+"*.pkl", os.path.join(args.output_directory, "epochs.txt"))
+            extract_epochs(
+                args.input_directory + "*.pkl",
+                os.path.join(args.output_directory, "epochs.txt"),
+            )
         else:
             raise ValueError(
                 f"No valid function alias has been given, must be one of: {', '.join([x.value for x in PreprocessingFunctions])}"
