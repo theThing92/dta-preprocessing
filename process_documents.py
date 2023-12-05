@@ -11,6 +11,7 @@ from enum import Enum
 from preprocessing import run_meta_data_extraction
 from annotationen import get_annotations
 from extract_epoch import extract_epochs
+from Gruppe3_Output_fertig import run_script
 
 __author__ = "Maurice Vogel"
 
@@ -27,6 +28,7 @@ class PreprocessingFunctions(Enum):
     annotations = "annotations"  # get_annotations
     epochs = "epochs"  # extract_epochs
     meta = "meta"  # run_meta_data_extraction
+    sentences = "sentences"  # run_script
 
 
 if __name__ == "__main__":
@@ -56,6 +58,13 @@ if __name__ == "__main__":
         help=f"Preprocessing functions to call, can be one of:"
         f" {', '.join([x.value for x in PreprocessingFunctions])}",
         default=PreprocessingFunctions.meta.value,
+    )
+    parser.add_argument(
+        "--lemma",
+        "-l",
+        type=str,
+        help="Lemma for extracting test items with sentence context"
+        " in a given context window of n tokens (before and after).",
     )
     args = parser.parse_args()
 
@@ -104,6 +113,22 @@ if __name__ == "__main__":
                 args.input_directory + "*.pkl",
                 os.path.join(args.output_directory, "epochs.txt"),
             )
+        elif args.function == PreprocessingFunctions.sentences.value:
+            try:
+                args.lemma
+                pool.starmap(
+                    run_script,
+                    zip(
+                        file_paths,
+                        [args.lemma for i in range(len(files))],
+                        [args.output_directory for i in range(len(files))],
+                    ),
+                )
+            except NameError:
+                logging.error(
+                    "Please define a lemma for this extracting target context."
+                )
+            raise NotImplementedError("Not implemented")
         else:
             raise ValueError(
                 f"No valid function alias has been given, must be one of: {', '.join([x.value for x in PreprocessingFunctions])}"
