@@ -1,0 +1,7 @@
+    <table:table-row table:style-name="ro2">
+     <table:table-cell table:style-name="ce5" office:value-type="string" calcext:value-type="string"><text:p><text:span text:style-name="T1">, S. von Senten Johann, Bischof von Dörpt, schränkt die Gewalt des Ordens in seinem Stifte ein 105 </text:span>Jsarnus, wird Erzbischof von Riga 72. vergleicht die Zwistigkeiten zwischen dem Orden <text:span text:style-name="T2">und </text:span>der Stadt Riga 75 <text:span text:style-name="T1">Israel Birgerson, schwedischer Reichsrat, stirbt 106 Jürgen von Aichstädt, Herrmeister 59. 60 Jürgen, ein wunderlicher</text:span></text:p>
+     </table:table-cell>
+     <table:table-cell table:content-validation-name="val1"/>
+     <table:table-cell table:style-name="ce5" office:value-type="string" calcext:value-type="string"><text:p><text:span text:style-name="T1">nicht hierher: denn die Liebe wird durch die Reinheit des Herzens verstärket. 2 Petr. 1, 1. </text:span>Die durch die Rechtfertigung unseres Gottes <text:span text:style-name="T2">und </text:span>Heilandes Jesu Christi gleichen Glauben mit uns bekommen haben. <text:span text:style-name="T1">Die Rechtfertigung ist nicht der Grund des Glaubens. 2 Petr. 1, 19. Wir haben noch mehr vor</text:span></text:p>
+     </table:table-cell>
+    </table:table-row>
