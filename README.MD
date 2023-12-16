@@ -86,7 +86,7 @@ Konfigurationsparameter (Anzahl Items, Pfade zu Input-/Output-Dateien) können i
 **Hinweis**:  
 Für die Fortschrittsanzeige bei Generierung der Items wird in [item_generation.py](item_generation.py)
 [tqdm](https://tqdm.github.io/docs/tqdm/) verwendet. Das Tool wird automatisch bei Ausführung des Skripts via pip3 installiert.
-Falls sich hierbei Probleme ergeben sollten, bitte Z. 6 und 84 im Python Modul entsprechend anpassen (s. Kommentare).
+Falls dies nicht gewünscht sein sollte, kann Z. 3 in [preprocess_data.sh](preprocess_data.sh) auskommentiert werden.
 
 # Gruppe 
 - Maurice Vogel

@@ -291,6 +291,13 @@
      <table:table-cell table:style-name="ce5" office:value-type="string" calcext:value-type="string"><text:p><text:span text:style-name="T1">Australien wirklich eine Sahara, so ist sie jedenfalls nur eingeschränkt auf den Kern der westlichen Ausbauschung des Festlandes. </text:span>Alles übrige Gebiet genießt eine zwar kurze, <text:span text:style-name="T2">aber </text:span>heftige Regenzeit. <text:span text:style-name="T1">Mitten im Kontinent sah sich Mac Kinlay von Regenfluten gefesselt, wenn nicht ernstlich bedroht, denn beinahe auf der</text:span></text:p>
      </table:table-cell>
     </table:table-row>
+    <table:table-row table:style-name="ro2">
+     <table:table-cell table:style-name="ce5" office:value-type="string" calcext:value-type="string"><text:p><text:span text:style-name="T1">ausgehobenen Truppen, deren Formierung und Exercirung, wie eifrig sie auch betrieben wurde, notwendiger Weise Zeit erforderte. </text:span>Die Armee überhaupt war imposant, <text:span text:style-name="T2">aber </text:span>zugleich einigermaßen buntscheckig. <text:span text:style-name="T1">-- Nach der Absicht des Oberfeldherrn sollte bis zum Winter 705/6 Heer und Flotte wesentlich vollständig an der Küste und</text:span></text:p>
+     </table:table-cell>
+     <table:table-cell table:content-validation-name="val1"/>
+     <table:table-cell table:style-name="ce5" office:value-type="string" calcext:value-type="string"><text:p><text:span text:style-name="T1">stieß an das Ziegelboot und der Stoss drehte letzteres so heftig, dass es gegen den Radkasten geschleudert wurde. </text:span>Der Dampfer bebte beim Zusammenstoss, fuhr <text:span text:style-name="T2">aber </text:span>lustig weiter. <text:span text:style-name="T1">Als Pumpelly auf dem Hinterteil über Bord schaute, sah er von Schiff und Schiffern nichts mehr als einen einzigen</text:span></text:p>
+     </table:table-cell>
+    </table:table-row>
    </table:table>
    <table:named-expressions/>
   </office:spreadsheet>

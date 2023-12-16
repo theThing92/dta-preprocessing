@@ -222,7 +222,7 @@ if __name__ == "__main__":
                 path_output_pickle_sents_pairwise = os.path.join(
                     args.output_directory, "sents_pairwise.pkl"
                 )
-                with open(path_output_pickle_sents_pairwise, "rb") as f:
+                with open(path_output_pickle_sents_pairwise, "wb") as f:
                     pickle.dump(results_flattened, f)
                 fods_builder(
                     results_flattened, args.output_directory, args.items_per_fod

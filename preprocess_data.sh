@@ -1,6 +1,6 @@
 #!/bin/bash
-# install progressbar for items (optional, uncomment and adapt scripts (cf. README.md)
-pip3 install tqdm
+# install progressbar for items (optional, can be uncommented, cf. README.md)
+python3 -m pip install tqdm
 # please note that all directory strings have to end on a backslash to be correctly parsable
 # config number of cores for preprocessing here
 NUM_CORES=8
@@ -21,7 +21,7 @@ MIN_ITEMS_E2=2 # default: 15
 MIN_ITEMS_E4=2 # default: 15
 MIN_ITEMS_E2_E4=2 # default: 30
 # number of items per fod file
-NUM_ITEMS_PER_FOD=1 # default: 5
+NUM_ITEMS_PER_FOD=2 # default: 5
 
 # args process_documents.py input_directory output_directory function
 # execute preprocessing pipeline
