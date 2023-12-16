@@ -1,0 +1,10 @@
+#author_surname=Hundt-Radowsky
+#author_forename=Hartwig
+#pub_name=Hundt-Radowsky, Hartwig: Die Judenschule, oder gründliche Anleitung, in kurzer Zeit ein vollkommener schwarzer oder weißer Jude zu werden. Bd. 1. Jerusalem [i. e. Aarau], 1822.
+#pub_place=Jerusalem
+#pub_date=1822
+#textClass_DTACorpus=core,ready,china
+#textClass_dtamain=Gebrauchsliteratur
+#textClass_dtasub=Gesellschaft
+#textClass_dwds1main=Gebrauchsliteratur
+#textClass_dwds1sub=Gesellschaft

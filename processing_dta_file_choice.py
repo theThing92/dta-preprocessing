@@ -1,8 +1,11 @@
 # Standard
+import os.path
 import random
+import pickle
+from pprint import pprint
 
 # Custom
-from sem_change.Annotationen import get_annotations
+from annotationen import get_annotations
 
 __author__ = "Christopher Chandler"
 
@@ -13,23 +16,23 @@ random.seed(seed_value)
 
 # This is dummy data for the epoch information that is to be supplied at a later data.
 # It simply fills the respect lists with sample files.
-epoch_data = {
-    "E2": list(),
-    "E4": list(),
-}
+# epoch_data = {
+#     "E2": list(),
+#     "E4": list(),
+# }
+#
+# for i in range(1, 1001):
+#     epoch_data["E2"].append(f"E2_file_{i}")
+#     epoch_data["E4"].append(f"E4_file_{i}")
+#
+# epoch_data["E2_E4"] = epoch_data["E2"] , epoch_data["E4"]
 
-for i in range(1, 1001):
-    epoch_data["E2"].append(f"E2_file_{i}")
-    epoch_data["E4"].append(f"E4_file_{i}")
 
-epoch_data["E2_E4"] = epoch_data["E2"] , epoch_data["E4"]
-
-
-def get_unique_epoch_files(epoch: str) -> dict:
-    """
-
-    """
-    dta_files = list(epoch_data.get(epoch))
+def get_unique_epoch_files(epoch: str, path_to_epochs_pickle) -> dict:
+    """ """
+    with open(path_to_epochs_pickle, "rb") as f:
+        epoch_data = pickle.load(f)
+    dta_files = epoch_data[epoch] #list(epoch_data.get(epoch))
 
     file_groups = list()
     used = list()
@@ -46,9 +49,11 @@ def get_unique_epoch_files(epoch: str) -> dict:
     return file_groups
 
 
-def get_mixed_epoch_files(epoch: str) -> dict:
+def get_mixed_epoch_files(epoch: str, path_to_epochs_pickle) -> dict:
     """ """
-    dta_files = list(epoch_data.get(epoch))
+    with open(path_to_epochs_pickle, "rb") as f:
+        epoch_data = pickle.load(f)
+    dta_files = epoch_data[epoch ] # list(epoch_data.get(epoch))
 
     file_groups = list()
     used = list()
@@ -72,18 +77,19 @@ def get_mixed_epoch_files(epoch: str) -> dict:
     return file_groups
 
 
-def main_get_epoch_files():
+def main_get_epoch_files(path_to_epochs_pickle="data/test/epochs/epochs.pkl", output_dir="data/test/docs_pairwise/"):
 
-    epoch_2 = get_unique_epoch_files("E2")
-    epoch_4 = get_unique_epoch_files("E4")
-    epoch_2_4 = get_mixed_epoch_files("E2_E4")
+    epoch_2 = get_unique_epoch_files("E2", path_to_epochs_pickle)
+    epoch_4 = get_unique_epoch_files("E4", path_to_epochs_pickle)
+    epoch_2_4 = get_mixed_epoch_files("E2_E4", path_to_epochs_pickle)
 
     data = {"E2": epoch_2, "E4": epoch_4, "E2_E4": epoch_2_4}
 
-    for i in data.get("E2_E4"):
-        print(i)
-
-
+    pprint(data)
+    outfile = os.path.join(output_dir, "docs_pairwise.pkl")
+    print(f"Writing pairwise documents for item extraction to {outfile}.")
+    with open(outfile, "wb") as f:
+        pickle.dump(data, f)
     return data
 
 

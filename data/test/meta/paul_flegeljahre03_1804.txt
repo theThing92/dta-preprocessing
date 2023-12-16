@@ -1,0 +1,10 @@
+#author_surname=Jean Paul
+#author_forename=NA
+#pub_name=Jean Paul: Flegeljahre. Bd. 3. Tübingen, 1804.
+#pub_place=Tübingen
+#pub_date=1804
+#textClass_DTACorpus=core,ready,mts
+#textClass_dtamain=Belletristik
+#textClass_dtasub=Roman
+#textClass_dwds1main=Belletristik
+#textClass_dwds1sub=Roman

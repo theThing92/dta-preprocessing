@@ -1,0 +1,8 @@
+#author_surname=Lettus
+#author_forename=Henricus
+#pub_name=[Lettus, Henricus]: Der Liefländischen Chronik Andrer Theil. Halle (Saale), 1753.
+#pub_place=Halle (Saale)
+#pub_date=1753
+#textClass_DTACorpus=core,ready,china
+#textClass_dwds1main=Wissenschaft
+#textClass_dwds1sub=Historiographie

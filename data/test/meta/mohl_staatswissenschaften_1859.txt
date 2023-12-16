@@ -1,0 +1,10 @@
+#author_surname=Mohl
+#author_forename=Robert von
+#pub_name=Mohl, Robert von: Encyklopädie der Staatswissenschaften. Tübingen, 1859.
+#pub_place=Tübingen
+#pub_date=1859
+#textClass_DTACorpus=core,ready,china
+#textClass_dtamain=Fachtext
+#textClass_dtasub=Politik
+#textClass_dwds1main=Wissenschaft
+#textClass_dwds1sub=Politik

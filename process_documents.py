@@ -2,33 +2,28 @@
 Module to preprocess DTA corpus files via multiprocessing.
 """
 import argparse
-import logging
 import multiprocessing as mp
 import os
+import pickle
 import sys
 from enum import Enum
 
 from preprocessing import run_meta_data_extraction
 from annotationen import get_annotations
 from extract_epoch import extract_epochs
-from Gruppe3_Output_fertig import run_script
+from processing_dta_file_choice import main_get_epoch_files
+from item_generation import generate_items
+from prob import fods_builder
 
 __author__ = "Maurice Vogel"
-
-
-# basic logging
-logging.basicConfig(
-    stream=sys.stdout,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
-)
 
 
 class PreprocessingFunctions(Enum):
     annotations = "annotations"  # get_annotations
     epochs = "epochs"  # extract_epochs
     meta = "meta"  # run_meta_data_extraction
-    sentences = "sentences"  # run_script
+    docs_pairwise = "docs_pairwise"  # main_get_epoch_files
+    sents_pairwise = "sents_pairwise"  # generate_items + fods_builder
 
 
 if __name__ == "__main__":
@@ -60,24 +55,66 @@ if __name__ == "__main__":
         default=PreprocessingFunctions.meta.value,
     )
     parser.add_argument(
-        "--lemma",
-        "-l",
+        "--items",
+        "-i",
         type=str,
-        help="Lemma for extracting test items with sentence context"
+        help="Path to item list for extracting test items with sentence context"
         " in a given context window of n tokens (before and after).",
     )
+    parser.add_argument(
+        "--window_size",
+        "-w",
+        type=int,
+        default=50,
+        help="Window size of n tokens for context extraction (before and after).",
+    )
+
+    parser.add_argument(
+        "--min_e2",
+        type=int,
+        default=15,
+        help="Minimal number of items per target in epoch E2.",
+    )
+
+    parser.add_argument(
+        "--min_e4",
+        type=int,
+        default=15,
+        help="Minimal number of items per target in epoch E4.",
+    )
+
+    parser.add_argument(
+        "--min_e2_e4",
+        type=int,
+        default=30,
+        help="Minimal number of items per target in epoch E4.",
+    )
+
+    parser.add_argument(
+        "--dir_csv_files", type=str, help="Path to directory with csv annotation files."
+    )
+
+    parser.add_argument(
+        "--items_per_fod",
+        type=int,
+        default=5,
+        help="Number of items to generate per fod file.",
+    )
+
     args = parser.parse_args()
 
     with mp.Pool(processes=args.num_processes) as pool:
-        log_msg_start = "Start multiprocessing for DTA files in {} with {} processes and function '{}'."
+        log_msg_start = (
+            "Start multiprocessing for DTA files in {} with {} processes and step '{}'."
+        )
         if args.num_processes:
-            logging.info(
+            print(
                 log_msg_start.format(
                     args.input_directory, args.num_processes, args.function
                 )
             )
         else:
-            logging.info(
+            print(
                 log_msg_start.format(
                     args.input_directory, os.cpu_count(), args.function
                 )
@@ -101,7 +138,8 @@ if __name__ == "__main__":
                     file_paths,
                     [
                         os.path.join(
-                            args.output_directory, file.replace(".xml", ".csv")
+                            args.output_directory,
+                            file.replace(".xml", ".csv").replace(".tcf", ""),
                         )
                         for file in files
                     ],
@@ -112,28 +150,91 @@ if __name__ == "__main__":
             extract_epochs(
                 args.input_directory + "*.pkl",
                 os.path.join(args.output_directory, "epochs.txt"),
-            )
-        elif args.function == PreprocessingFunctions.sentences.value:
-            try:
-                args.lemma
-                pool.starmap(
-                    run_script,
-                    zip(
-                        file_paths,
-                        [args.lemma for i in range(len(files))],
-                        [args.output_directory for i in range(len(files))],
-                    ),
-                )
-            except NameError:
-                logging.error(
-                    "Please define a lemma for this extracting target context."
-                )
-            raise NotImplementedError("Not implemented")
-        else:
-            raise ValueError(
-                f"No valid function alias has been given, must be one of: {', '.join([x.value for x in PreprocessingFunctions])}"
+                as_pickle=True,
             )
 
-        logging.info(
-            f"Preprocessing is finished. Files have been saved to {args.output_directory}."
-        )
+        elif args.function == PreprocessingFunctions.docs_pairwise.value:
+            main_get_epoch_files(
+                args.input_directory + "epochs.pkl", args.output_directory
+            )
+
+        elif args.function == PreprocessingFunctions.sents_pairwise.value:
+            try:
+                args.items
+            except NameError:
+                print("Please define a path to your items file.")
+            try:
+                args.window_size
+            except NameError:
+                print("Please define the context window extraction size.")
+            try:
+                args.min_e2
+            except NameError:
+                print("Please define the minimal target size for epoch E2.")
+            try:
+                args.min_e4
+            except NameError:
+                print("Please define the minimal target size for epoch E2.")
+            try:
+                args.min_e2_e4
+            except NameError:
+                print("Please define the minimal target size for epoch E2_E4.")
+            try:
+                args.items_per_fod
+            except NameError:
+                print("Please define the number of items per fod file.")
+
+            with open(args.items, "r", encoding="utf-8") as f:
+                items = f.readlines()
+                items = [i.replace("\n", "") for i in items]
+
+            with open(
+                os.path.join(args.input_directory, "docs_pairwise.pkl"), "rb"
+            ) as f:
+                docs_pairwise = pickle.load(f)
+
+            for k, item_list in docs_pairwise.items():
+                for i, doc in enumerate(item_list):
+                    docs_pairwise[k][i][0] = os.path.join(
+                        args.dir_csv_files, doc[0] + ".csv"
+                    )
+                    docs_pairwise[k][i][1] = os.path.join(
+                        args.dir_csv_files, doc[1] + ".csv"
+                    )
+
+            try:
+                results_list = generate_items(
+                    items,
+                    docs_pairwise,
+                    args.window_size,
+                    args.min_e2,
+                    args.min_e4,
+                    args.min_e2_e4,
+                )
+                # flatten sentence pairs tuples (expected input for fods_builder)
+                results_flattened = []
+                for sentence_pair in results_list:
+                    sent1 = sentence_pair[0]
+                    sent2 = sentence_pair[1]
+                    results_flattened.append(sent1)
+                    results_flattened.append(sent2)
+
+                path_output_pickle_sents_pairwise = os.path.join(
+                    args.output_directory, "sents_pairwise.pkl"
+                )
+                with open(path_output_pickle_sents_pairwise, "rb") as f:
+                    pickle.dump(results_flattened, f)
+                fods_builder(
+                    results_flattened, args.output_directory, args.items_per_fod
+                )
+            except Exception as e:
+                print(e)
+        else:
+            raise ValueError(
+                f"No valid function alias has been given, must be one of:"
+                f" {', '.join([x.value for x in PreprocessingFunctions])}"
+            )
+
+    print(
+        f"Preprocessing for step '{args.function}' is finished. Files have been saved to {args.output_directory}."
+    )
