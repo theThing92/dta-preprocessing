@@ -1,6 +1,8 @@
 #!/bin/bash
 # install progressbar for items (optional, can be uncommented, cf. README.md)
 python3 -m pip install tqdm
+# install pandas for faster csv data processing (**REQUIRED**)
+python3 -m pip install pandas
 # please note that all directory strings have to end on a backslash to be correctly parsable
 # config number of cores for preprocessing here
 NUM_CORES=8
@@ -12,16 +14,22 @@ OUTPUT_DIR_META="data/test/meta/"
 OUTPUT_DIR_EPOCHS="data/test/epochs/"
 OUTPUT_DIR_DOCS_PAIRWISE="data/test/docs_pairwise/"
 OUTPUT_DIR_FODS="data/test/fods/"
+# create output directories
+mkdir -p $OUTPUT_DIR_ANNOTATIONS
+mkdir -p $OUTPUT_DIR_META
+mkdir -p $OUTPUT_DIR_EPOCHS
+mkdir -p $OUTPUT_DIR_DOCS_PAIRWISE
+mkdir -p $OUTPUT_DIR_FODS
 # path to item file (one item per line, no newline at end of file)
 ITEMS="data/items/items.txt"
 # window size for context extraction
 WINDOW_SIZE=50
 # minimum number of items per target and epoch
-MIN_ITEMS_E2=2 # default: 15
-MIN_ITEMS_E4=2 # default: 15
-MIN_ITEMS_E2_E4=2 # default: 30
+MIN_ITEMS_E2=15 # default: 15
+MIN_ITEMS_E4=15 # default: 15
+MIN_ITEMS_E2_E4=30 # default: 30
 # number of items per fod file
-NUM_ITEMS_PER_FOD=2 # default: 5
+NUM_ITEMS_PER_FOD=5 # default: 5
 
 # args process_documents.py input_directory output_directory function
 # execute preprocessing pipeline

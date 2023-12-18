@@ -12,7 +12,7 @@ from preprocessing import run_meta_data_extraction
 from annotationen import get_annotations
 from extract_epoch import extract_epochs
 from processing_dta_file_choice import main_get_epoch_files
-from item_generation import generate_items
+from item_generation import generate_items_pandas
 from prob import fods_builder
 
 __author__ = "Maurice Vogel"
@@ -203,7 +203,7 @@ if __name__ == "__main__":
                     )
 
             try:
-                results_list = generate_items(
+                results_list = generate_items_pandas(
                     items,
                     docs_pairwise,
                     args.window_size,
@@ -211,21 +211,21 @@ if __name__ == "__main__":
                     args.min_e4,
                     args.min_e2_e4,
                 )
-                # flatten sentence pairs tuples (expected input for fods_builder)
-                results_flattened = []
-                for sentence_pair in results_list:
-                    sent1 = sentence_pair[0]
-                    sent2 = sentence_pair[1]
-                    results_flattened.append(sent1)
-                    results_flattened.append(sent2)
+                # # flatten sentence pairs tuples (expected input for fods_builder)
+                # results_flattened = []
+                # for sentence_pair in results_list:
+                #     sent1 = sentence_pair[0]
+                #     sent2 = sentence_pair[1]
+                #     results_flattened.append(sent1)
+                #     results_flattened.append(sent2)
 
                 path_output_pickle_sents_pairwise = os.path.join(
                     args.output_directory, "sents_pairwise.pkl"
                 )
                 with open(path_output_pickle_sents_pairwise, "wb") as f:
-                    pickle.dump(results_flattened, f)
+                    pickle.dump(results_list, f)
                 fods_builder(
-                    results_flattened, args.output_directory, args.items_per_fod
+                    results_list, args.output_directory, args.items_per_fod
                 )
             except Exception as e:
                 print(e)
