@@ -72,21 +72,17 @@ run_meta_data_extraction(file_path)
 #textClass_dwds1sub=Historiographie
 ```
 
-### Vorverarbeitung der Daten mit multiprocessing
+### Vorverarbeitung der Daten mit multiprocessing (WIP)
 Die DTA Input Daten in einem Verzeichnis können parallel verarbeitet werden. Für mögliche Optionen des Skripts, siehe:
 ```bash
 python3 process_documents.py --help
 ```
-Ausführung des Vorverarbeitungspipeline:
+Ausführung des Skripts:
 ```bash
-./preprocess_data.sh
+python3 process_documents.py your/input/directory /your/output/directory
 ```
-Konfigurationsparameter (Anzahl Items, Pfade zu Input-/Output-Dateien) können in den entsprechenden Variablen des Skripts gesetzt werden.
+TODO: Vorverarbeitungsskripte der anderen Gruppen anbinden.
 
-**Hinweis**:  
-Für die Fortschrittsanzeige bei Generierung der Items wird in [item_generation.py](item_generation.py)
-[tqdm](https://tqdm.github.io/docs/tqdm/) verwendet. Das Tool wird automatisch bei Ausführung des Skripts via pip3 installiert.
-Falls dies nicht gewünscht sein sollte, kann Z. 3 in [preprocess_data.sh](preprocess_data.sh) auskommentiert werden.
 
 # Gruppe 
 - Maurice Vogel
