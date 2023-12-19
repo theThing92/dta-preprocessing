@@ -1,18 +1,17 @@
 # Standard
 import argparse
-import sys
 import os
 import pickle
+import sys
 import xml.etree.ElementTree as ET
-
 from typing import Any, Dict
-
-# Pip
-# None
 
 # Custom
 from constants.meta_constants import MetaInformation
 from logger.basic_logger import log_output
+
+# Pip
+# None
 
 
 __author__ = "Christopher Chandler", "Maurice Vogel"

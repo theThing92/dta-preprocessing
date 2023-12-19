@@ -8,12 +8,12 @@ import pickle
 import sys
 from enum import Enum
 
-from preprocessing import run_meta_data_extraction
 from annotationen import get_annotations
 from extract_epoch import extract_epochs
-from processing_dta_file_choice import main_get_epoch_files
 from item_generation import generate_items_pandas
+from preprocessing import run_meta_data_extraction
 from prob import fods_builder
+from processing_dta_file_choice import main_get_epoch_files
 
 __author__ = "Maurice Vogel"
 
@@ -224,9 +224,7 @@ if __name__ == "__main__":
                 )
                 with open(path_output_pickle_sents_pairwise, "wb") as f:
                     pickle.dump(results_list, f)
-                fods_builder(
-                    results_list, args.output_directory, args.items_per_fod
-                )
+                fods_builder(results_list, args.output_directory, args.items_per_fod)
             except Exception as e:
                 print(e)
         else:

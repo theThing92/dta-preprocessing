@@ -1,7 +1,7 @@
 # Standard
 import os.path
-import random
 import pickle
+import random
 from pprint import pprint
 
 # Custom
@@ -32,7 +32,7 @@ def get_unique_epoch_files(epoch: str, path_to_epochs_pickle) -> dict:
     """ """
     with open(path_to_epochs_pickle, "rb") as f:
         epoch_data = pickle.load(f)
-    dta_files = epoch_data[epoch] #list(epoch_data.get(epoch))
+    dta_files = epoch_data[epoch]  # list(epoch_data.get(epoch))
 
     file_groups = list()
     used = list()
@@ -53,7 +53,7 @@ def get_mixed_epoch_files(epoch: str, path_to_epochs_pickle) -> dict:
     """ """
     with open(path_to_epochs_pickle, "rb") as f:
         epoch_data = pickle.load(f)
-    dta_files = epoch_data[epoch ] # list(epoch_data.get(epoch))
+    dta_files = epoch_data[epoch]  # list(epoch_data.get(epoch))
 
     file_groups = list()
     used = list()
@@ -63,22 +63,20 @@ def get_mixed_epoch_files(epoch: str, path_to_epochs_pickle) -> dict:
         rand_choice_E4 = random.sample(dta_files[1], 1)
 
         if rand_choice_E4 not in used and rand_choice_E2 not in used:
-            file_groups.append((rand_choice_E2+rand_choice_E4))
+            file_groups.append((rand_choice_E2 + rand_choice_E4))
 
         used.append(rand_choice_E2)
         used.append(rand_choice_E4)
 
-
     file_groups.sort()
-
-
-
 
     return file_groups
 
 
-def main_get_epoch_files(path_to_epochs_pickle="data/test/epochs/epochs.pkl", output_dir="data/test/docs_pairwise/"):
-
+def main_get_epoch_files(
+    path_to_epochs_pickle="data/test/epochs/epochs.pkl",
+    output_dir="data/test/docs_pairwise/",
+):
     epoch_2 = get_unique_epoch_files("E2", path_to_epochs_pickle)
     epoch_4 = get_unique_epoch_files("E4", path_to_epochs_pickle)
     epoch_2_4 = get_mixed_epoch_files("E2_E4", path_to_epochs_pickle)
