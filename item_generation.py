@@ -14,7 +14,7 @@ try:
     _TQDM_AVAILABLE = True
 except ImportError:
     _TQDM_AVAILABLE = False
-random.seed(1337)  # Set Seed for Program
+# random.seed(1337)  # Set Seed for Program
 import pandas as pd
 
 
@@ -67,278 +67,317 @@ def generate_item_tuple(
 
 
 def generate_items_pandas(
-    items, epochen_dict, window_size, minquant_e2=15, minquant_e4=15, minquant_e2_e4=30
+    items,
+    epoch_dict,
+    window_size,
+    num_items_e2=15,
+    num_items_e4=15,
+    num_items_e2_e4=30,
+    max_len_sent_target=30,
+    max_sampling_steps=10000,
 ):
-    generated_items = []
+    pos_tags_to_skip = ["$.", "$,", "$("]
+    generated_items = {item: [] for item in items}
     # save already loaded dataframes here
     csv_loaded = dict()
-    assert window_size % 2 == 0, "Please define an even window_size"
+    assert window_size % 2 == 0, "Please define an even window_size."
     index_before_after = int(window_size / 2)
 
     if _TQDM_AVAILABLE:
         items = tqdm(items)
     for item in items:
-        generated_items_tmp = {key: [] for key in epochen_dict.keys()}
+        generated_items_tmp = {key: [] for key in epoch_dict.keys()}
         print(f"Processing item '{item}'...")
-        for epoch, csv_file_paths in epochen_dict.items():
-            for path_csv1, path_csv2 in csv_file_paths:
-                if path_csv1 not in csv_loaded:
-                    df1 = pd.read_csv(path_csv1, delimiter="\t", encoding="utf-8")
-                    csv_loaded[path_csv1] = df1
-                else:
-                    df1 = csv_loaded[path_csv1]
-                if path_csv2 not in csv_loaded:
-                    df2 = pd.read_csv(path_csv2, delimiter="\t", encoding="utf-8")
-                    csv_loaded[path_csv2] = df2
-                else:
-                    df2 = csv_loaded[path_csv2]
 
-                df1_only_rows_with_item = df1[df1["Corr_token"] == item]
-                df2_only_rows_with_item = df2[df2["Corr_token"] == item]
-                # TODO: add count for "skipping" punctuation for token count
-                # generate sentence pairs + contexts
-                if len(df1_only_rows_with_item) > 0:
-                    for i in df1_only_rows_with_item.index:
-                        try:
-                            target1 = df1.iloc[i : i + 1]
-                            sent_id1 = target1["Sent_ID"].values[0]
-                            target_sent1 = df1[df1["Sent_ID"] == sent_id1]
-                            start_idx_target_sent1 = target_sent1.index[0]
-                            end_idx_target_sent1 = target_sent1.index[-1]
-                            target_before_sent1 = df1.iloc[start_idx_target_sent1:i]
-                            target_after_sent1 = df1.iloc[
-                                i + 1 : end_idx_target_sent1 + 1
+        counter = 0
+        while (
+            len(generated_items_tmp["E2"]) != num_items_e2
+            and len(generated_items_tmp["E4"]) != num_items_e4
+            and len(generated_items_tmp["E2_E4"]) != num_items_e2_e4
+        ) or counter <= max_sampling_steps:
+            counter += 1
+            epoch, csv_file_paths = random.choice(list(epoch_dict.items()))
+            path_csv1, path_csv2 = random.choice(csv_file_paths)
+
+            if path_csv1 not in csv_loaded:
+                df1 = pd.read_csv(path_csv1, delimiter="\t", encoding="utf-8")
+                csv_loaded[path_csv1] = df1
+            else:
+                df1 = csv_loaded[path_csv1]
+            if path_csv2 not in csv_loaded:
+                df2 = pd.read_csv(path_csv2, delimiter="\t", encoding="utf-8")
+                csv_loaded[path_csv2] = df2
+            else:
+                df2 = csv_loaded[path_csv2]
+
+            df1_only_rows_with_item = df1[df1["Corr_token"] == item]
+            df2_only_rows_with_item = df2[df2["Corr_token"] == item]
+            # TODO: add count for "skipping" punctuation for token count
+            # generate sentence pairs + contexts
+            if (
+                len(df1_only_rows_with_item) > 0
+                and len(df2_only_rows_with_item) > 0
+            ):
+                df1_only_rows_with_item = df1[df1["Corr_token"] == item].sample(1)
+                df2_only_rows_with_item = df2[df2["Corr_token"] == item].sample(1)
+
+                sent_id1 = df1_only_rows_with_item["Sent_ID"].values[0]
+                sent_id2 = df2_only_rows_with_item["Sent_ID"].values[0]
+
+                sent_len1 = len(df1[df1["Sent_ID"] == sent_id1])
+                sent_len2 = len(df2[df2["Sent_ID"] == sent_id2])
+
+                if sent_len1 <= max_len_sent_target and sent_len2 <= max_len_sent_target:
+
+                    i1 = df1_only_rows_with_item.index.values[0]
+                    i2 = df2_only_rows_with_item.index.values[0]
+                    try:
+                        target1 = df1.iloc[i1 : i1 + 1]
+                        sent_id1 = target1["Sent_ID"].values[0]
+                        target_sent1 = df1[df1["Sent_ID"] == sent_id1]
+                        start_idx_target_sent1 = target_sent1.index[0]
+                        end_idx_target_sent1 = target_sent1.index[-1]
+                        target_before_sent1 = df1.iloc[start_idx_target_sent1:i1]
+                        target_after_sent1 = df1.iloc[
+                            i1 + 1 : end_idx_target_sent1 + 1
+                        ]
+
+                        num_tokens_before_rest1 = index_before_after - (
+                            i1 - start_idx_target_sent1
+                        )
+                        num_tokens_after_rest1 = index_before_after - (
+                            end_idx_target_sent1 - i1
+                        )
+
+                        context_after1 = ""
+                        context_before1 = ""
+
+                        # not enough pre-context available
+                        # reason 1: target at beginning of document --> ad num_tokens_before_rest to post-context instead
+                        if (
+                            num_tokens_before_rest1 > 0
+                            and (start_idx_target_sent1 - num_tokens_before_rest1)
+                            <= 0
+                        ):
+                            context_before1 = ""  # df1[i+1:i+index_before_after+1]
+                            context_after1 = df1[
+                                end_idx_target_sent1
+                                + 1 : end_idx_target_sent1
+                                + index_before_after
+                                + num_tokens_after_rest1
+                                + num_tokens_before_rest1
+                                + 1
+                            ]
+                        else:
+                            context_before1 = df1[
+                                start_idx_target_sent1
+                                - num_tokens_before_rest1 : start_idx_target_sent1
+                                # + 1
                             ]
 
-                            num_tokens_before_rest1 = index_before_after - (
-                                i - start_idx_target_sent1
-                            )
-                            num_tokens_after_rest1 = index_before_after - (
-                                end_idx_target_sent1 - i
-                            )
+                        try:
+                            if context_after1.empty:
+                                context_after1 = df1[
+                                    end_idx_target_sent1
+                                    + 1 : end_idx_target_sent1
+                                    + num_tokens_after_rest1
+                                    + 1
+                                ]
+                        except AttributeError:
+                            context_after1 = df1[
+                                end_idx_target_sent1
+                                + 1 : end_idx_target_sent1
+                                + num_tokens_after_rest1
+                                + 1
+                            ]
 
+                        # not enough post-context available
+                        # reason 1: target at end of document --> ad num_tokens_after_rest to pre-context instead
+                        if (
+                            num_tokens_after_rest1 > 0
+                            and (end_idx_target_sent1 + num_tokens_after_rest1)
+                            >= len(df1)
+                            and context_after1.empty
+                        ):
+                            context_after1 = ""  # df1[i+1:i+index_before_after+1]
+                            context_before1 = df1[
+                                start_idx_target_sent1
+                                - index_before_after
+                                - num_tokens_after_rest1
+                                - num_tokens_before_rest1 : start_idx_target_sent1  # +1
+                            ]
+                        # reason 2: post context longer than right side of context window
+                        elif num_tokens_after_rest1 < 0 and context_after1.empty:
                             context_after1 = ""
-                            context_before1 = ""
 
-                            # not enough pre-context available
-                            # reason 1: target at beginning of document --> ad num_tokens_before_rest to post-context instead
-                            if (
-                                num_tokens_before_rest1 > 0
-                                and (start_idx_target_sent1 - num_tokens_before_rest1)
-                                <= 0
-                            ):
-                                context_before1 = ""  # df1[i+1:i+index_before_after+1]
-                                context_after1 = df1[
-                                    end_idx_target_sent1
-                                    + 1 : end_idx_target_sent1
-                                    + index_before_after
-                                    + num_tokens_after_rest1
-                                    + num_tokens_before_rest1
-                                    + 1
-                                ]
-                            else:
-                                context_before1 = df1[
-                                    start_idx_target_sent1
-                                    - num_tokens_before_rest1 : start_idx_target_sent1
-                                    # + 1
-                                ]
+                        target2 = df2.iloc[i2: i2 + 1]
+                        sent_id2 = target2["Sent_ID"].values[0]
+                        target_sent2 = df2[df2["Sent_ID"] == sent_id2]
+                        start_idx_target_sent2 = target_sent2.index[0]
+                        end_idx_target_sent2 = target_sent2.index[-1]
+                        target_before_sent2 = df2.iloc[start_idx_target_sent2:i2]
+                        target_after_sent2 = df2.iloc[
+                                             i2 + 1: end_idx_target_sent2 + 1
+                                             ]
 
-                            try:
-                                if context_after1.empty:
-                                    context_after1 = df1[
-                                        end_idx_target_sent1
-                                        + 1 : end_idx_target_sent1
-                                        + num_tokens_after_rest1
-                                        + 1
-                                    ]
-                            except AttributeError:
-                                context_after1 = df1[
-                                    end_idx_target_sent1
-                                    + 1 : end_idx_target_sent1
-                                    + num_tokens_after_rest1
-                                    + 1
-                                ]
+                        num_tokens_before_rest2 = index_before_after - (
+                                i2 - start_idx_target_sent2
+                        )
+                        num_tokens_after_rest2 = index_before_after - (
+                                end_idx_target_sent2 - i2
+                        )
 
-                            # not enough post-context available
-                            # reason 1: target at end of document --> ad num_tokens_after_rest to pre-context instead
-                            if (
-                                num_tokens_after_rest1 > 0
-                                and (end_idx_target_sent1 + num_tokens_after_rest1)
-                                >= len(df1)
-                                and context_after1.empty
-                            ):
-                                context_after1 = ""  # df1[i+1:i+index_before_after+1]
-                                context_before1 = df1[
-                                    start_idx_target_sent1
-                                    - index_before_after
-                                    - num_tokens_after_rest1
-                                    - num_tokens_before_rest1 : start_idx_target_sent1  # +1
-                                ]
-                            # reason 2: post context longer than right side of context window
-                            elif num_tokens_after_rest1 < 0 and context_after1.empty:
-                                context_after1 = ""
+                        context_after2 = ""
+                        context_before2 = ""
 
-                            item1 = (
-                                context_before1,
-                                target_before_sent1,
-                                target1,
-                                target_after_sent1,
-                                context_after1,
-                            )
-                            item1 = generate_item_tuple(*item1)
-
-                            # add meta info
-                            item1_final = (item1, [path_csv1, item, sent_id1, epoch])
-
-                            if item1_final not in generated_items_tmp[epoch]:
-                                generated_items_tmp[epoch].append(item1_final)
-                                # print(
-                                #     f"Unique item found in {path_csv1}, adding to list..."
-                                # )
-                            else:
-                                pass
-                                # print("Item already in list, skipping...")
-
-                        except Exception as e:
-                            print(
-                                f"An error occurred in row with index {i}, skipping..."
-                            )
-                            if _PYTHON_VERSION[1] <= 8:
-                                print(e)
-                            else:
-                                traceback.print_exception(e)
-
-                # TODO: functionalize this code and the code above
-                if len(df2_only_rows_with_item) > 0:
-                    for i in df2_only_rows_with_item.index:
-                        try:
-                            target2 = df2.iloc[i : i + 1]
-                            sent_id2 = target2["Sent_ID"].values[0]
-                            target_sent2 = df2[df2["Sent_ID"] == sent_id2]
-                            start_idx_target_sent2 = target_sent2.index[0]
-                            end_idx_target_sent2 = target_sent2.index[-1]
-                            target_before_sent2 = df2.iloc[start_idx_target_sent2:i]
-                            target_after_sent2 = df2.iloc[
-                                i + 1 : end_idx_target_sent2 + 1
-                            ]
-
-                            num_tokens_before_rest2 = index_before_after - (
-                                i - start_idx_target_sent2
-                            )
-                            num_tokens_after_rest2 = index_before_after - (
-                                end_idx_target_sent2 - i
-                            )
-
-                            context_after2 = ""
-                            context_before2 = ""
-
-                            # not enough pre-context available
-                            # reason 1: target at beginning of document --> ad num_tokens_before_rest to post-context instead
-                            if (
+                        # not enough pre-context available
+                        # reason 1: target at beginning of document --> ad num_tokens_before_rest to post-context instead
+                        if (
                                 num_tokens_before_rest2 > 0
                                 and (start_idx_target_sent2 - num_tokens_before_rest2)
                                 <= 0
-                            ):
-                                context_before2 = ""  # df1[i+1:i+index_before_after+1]
-                                context_after2 = df2[
-                                    end_idx_target_sent2
-                                    + 1 : end_idx_target_sent2
-                                    + index_before_after
-                                    + num_tokens_after_rest2
-                                    + num_tokens_before_rest2
-                                    + 1
-                                ]
-                            else:
-                                context_before2 = df2[
-                                    start_idx_target_sent2
-                                    - num_tokens_before_rest2 : start_idx_target_sent2
-                                    # + 1
-                                ]
+                        ):
+                            context_before2 = ""  # df1[i+1:i+index_before_after+1]
+                            context_after2 = df2[
+                                             end_idx_target_sent2
+                                             + 1: end_idx_target_sent2
+                                                  + index_before_after
+                                                  + num_tokens_after_rest2
+                                                  + num_tokens_before_rest2
+                                                  + 1
+                                             ]
+                        else:
+                            context_before2 = df2[
+                                              start_idx_target_sent2
+                                              - num_tokens_before_rest2: start_idx_target_sent2
+                                              # + 1
+                                              ]
 
-                            try:
-                                if context_after2.empty:
-                                    context_after2 = df2[
-                                        end_idx_target_sent2
-                                        + 1 : end_idx_target_sent2
-                                        + num_tokens_after_rest2
-                                        + 1
-                                    ]
-                            except AttributeError:
+                        try:
+                            if context_after2.empty:
                                 context_after2 = df2[
-                                    end_idx_target_sent2
-                                    + 1 : end_idx_target_sent2
-                                    + num_tokens_after_rest2
-                                    + 1
-                                ]
+                                                 end_idx_target_sent2
+                                                 + 1: end_idx_target_sent2
+                                                      + num_tokens_after_rest2
+                                                      + 1
+                                                 ]
+                        except AttributeError:
+                            context_after2 = df2[
+                                             end_idx_target_sent2
+                                             + 1: end_idx_target_sent2
+                                                  + num_tokens_after_rest2
+                                                  + 1
+                                             ]
 
-                            # not enough post-context available
-                            # reason 1: target at end of document --> ad num_tokens_after_rest to pre-context instead
-                            if (
+                        # not enough post-context available
+                        # reason 1: target at end of document --> ad num_tokens_after_rest to pre-context instead
+                        if (
                                 num_tokens_after_rest2 > 0
                                 and (end_idx_target_sent2 + num_tokens_after_rest2)
                                 >= len(df2)
                                 and context_after2.empty
-                            ):
-                                context_after2 = ""  # df1[i+1:i+index_before_after+1]
-                                context_before2 = df2[
-                                    start_idx_target_sent2
-                                    - index_before_after
-                                    - num_tokens_after_rest2
-                                    - num_tokens_before_rest2 : start_idx_target_sent2  # +1
-                                ]
-                            # reason 2: post context longer than right side of context window
+                        ):
+                            context_after2 = ""  # df1[i+1:i+index_before_after+1]
+                            context_before2 = df2[
+                                              start_idx_target_sent2
+                                              - index_before_after
+                                              - num_tokens_after_rest2
+                                              - num_tokens_before_rest2: start_idx_target_sent2  # +1
+                                              ]
+                        # reason 2: post context longer than right side of context window
 
-                            elif num_tokens_after_rest2 < 0 and context_after2.empty:
-                                context_after2 = ""
+                        elif num_tokens_after_rest2 < 0 and context_after2.empty:
+                            context_after2 = ""
 
-                            item2 = (
-                                context_before2,
-                                target_before_sent2,
-                                target2,
-                                target_after_sent2,
-                                context_after2,
-                            )
-                            item2 = generate_item_tuple(*item2)
+                        item1 = (
+                            context_before1,
+                            target_before_sent1,
+                            target1,
+                            target_after_sent1,
+                            context_after1,
+                        )
+                        item1 = generate_item_tuple(*item1)
 
-                            # add meta info
-                            item2_final = (item2, [path_csv2, item, sent_id2, epoch])
+                        # add meta info
+                        item1_final = (item1, [path_csv1, item, sent_id1, epoch])
+                        item2 = (
+                            context_before2,
+                            target_before_sent2,
+                            target2,
+                            target_after_sent2,
+                            context_after2,
+                        )
+                        item2 = generate_item_tuple(*item2)
 
-                            if item2_final not in generated_items_tmp[epoch]:
-                                generated_items_tmp[epoch].append(item2_final)
-                                # print(
-                                #     f"Unique item found in {path_csv2}, adding to list..."
-                                # )
-                            else:
-                                pass
-                                # print("Item already in list, skipping...")
+                        # add meta info
+                        item2_final = (item2, [path_csv2, item, sent_id2, epoch])
 
-                        except Exception as e:
-                            print(
-                                f"An error occurred in row with index {i}, skipping..."
-                            )
-                            if _PYTHON_VERSION[1] <= 8:
-                                print(e)
-                            else:
-                                traceback.print_exception(e)
+                        if (item1_final, item2_final) not in generated_items_tmp[epoch]:
+
+                            if epoch == "E2":
+                                if len(generated_items_tmp[epoch]) < num_items_e2:
+                                    generated_items_tmp[epoch].append((item1_final, item2_final))
+                                    print(
+                                        f"Unique item found in {path_csv2}, adding to list..."
+                                    )
+
+                            elif epoch == "E4":
+                                if len(generated_items_tmp[epoch]) < num_items_e4:
+                                    generated_items_tmp[epoch].append((item1_final, item2_final))
+                                    print(
+                                        f"Unique item found in {path_csv2}, adding to list..."
+                                    )
+
+                            elif epoch == "E2_E4":
+                                if len(generated_items_tmp[epoch]) < num_items_e2_e4:
+                                    generated_items_tmp[epoch].append((item1_final, item2_final))
+                                    print(
+                                        f"Unique item found in {path_csv2}, adding to list..."
+                                    )
+
+                        else:
+                            pass
+                            # print("Item already in list, skipping...")
+
+                    except Exception as e:
+                        print(
+                            f"An error occurred in row with indices {i1, i2}, skipping..."
+                        )
+                        if _PYTHON_VERSION[1] <= 8:
+                            print(e)
+                        else:
+                            traceback.print_exception(e)
+
+            if len(generated_items_tmp["E2"]) == num_items_e2 and len(generated_items_tmp["E4"]) == num_items_e4 and len(generated_items_tmp["E2_E4"]) == num_items_e2_e4:
+                counter += max_sampling_steps
 
         e2_items_tmp_values = generated_items_tmp["E2"]
         e4_items_tmp_values = generated_items_tmp["E4"]
         e2_e4_items_tmp_values = generated_items_tmp["E2_E4"]
 
         if (
-            len(e2_items_tmp_values) >= minquant_e2
-            and len(e4_items_tmp_values) >= minquant_e4
-            and len(e2_e4_items_tmp_values) >= minquant_e2_e4
+            len(e2_items_tmp_values) >= num_items_e2
+            and len(e4_items_tmp_values) >= num_items_e4
+            and len(e2_e4_items_tmp_values) >= num_items_e2_e4
         ):
-            generated_items += e2_items_tmp_values
-            generated_items += e4_items_tmp_values
-            generated_items += e2_e4_items_tmp_values
+            generated_items[item] += e2_items_tmp_values
+            generated_items[item] += e4_items_tmp_values
+            generated_items[item] += e2_e4_items_tmp_values
+            random.shuffle(generated_items[item])
 
         else:
             print("Not enough items found in at least one epoch, skipping item...")
 
-    random.shuffle(generated_items)
-    return generated_items
+    # process final item dict in parallel and write n item pairs sequentially to list, such that result list has format:
+    # [item_1_1, item_2_1,... item_n_1, ... item_1_2, item2_2, .. item_n_2, ...]
+    zip_list_values = list(zip(*generated_items.values()))
+
+    results_flattened = []
+    for item in zip_list_values:
+        for item_pair in item:
+            results_flattened.append(item_pair)
+
+    return results_flattened
 
 
 def all_unique(x):
@@ -636,7 +675,7 @@ if __name__ == "__main__":
 
     import pickle
 
-    items = ["und", "aber", "Frau"]
+    items = ["und", "aber", "er", "sie", "es"]
     path_docs_pairwise = "data/test/docs_pairwise/docs_pairwise.pkl"
     with open(path_docs_pairwise, "rb") as f:
         doc_pairwise = pickle.load(f)
@@ -655,4 +694,4 @@ if __name__ == "__main__":
     # doc_pairwise["E4"] = [doc_pairwise["E4"][0]]
     # doc_pairwise["E2_E4"] = [doc_pairwise["E2_E4"][0]]
 
-    out = generate_items_pandas(items, doc_pairwise, 50, 5, 5, 10)
+    out = generate_items_pandas(items, doc_pairwise, 80, 5, 5, 10, 50, 100)

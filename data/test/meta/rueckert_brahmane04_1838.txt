@@ -1,0 +1,10 @@
+#author_surname=Rückert
+#author_forename=Friedrich
+#pub_name=Rückert, Friedrich: Die Weisheit des Brahmanen. Bd. 4. Leipzig, 1838.
+#pub_place=Leipzig
+#pub_date=1838
+#textClass_DTACorpus=core,ready,mts
+#textClass_dtamain=Belletristik
+#textClass_dtasub=Lyrik
+#textClass_dwds1main=Belletristik
+#textClass_dwds1sub=Lyrik

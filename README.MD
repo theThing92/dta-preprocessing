@@ -1,5 +1,16 @@
 # dta-preprocessing
 
+## Installation
+**Hinweis**: Wenn das Main Skript [preprocess_data.sh](preprocess_data.sh) direkt ausgeführt wird, ist keine
+Installation notwendig. Alle notwendigen Dependenzen werden automatisch mitinstalliert.
+
+Wird der Code aus einzelnen Modulen separat verwendet, können diese wie folgt installiert werden:
+
+```bash
+python3 -m pip install tqdm # optional
+python3 -m pip install pandas # notwendig
+```
+
 ## Beschreibung
 Dieses Programm liest eine XML-Datei von der DTA (Digitale Texte und Editionen) 
 und extrahiert die erforderlichen Daten aus dieser Datei. 
@@ -72,17 +83,22 @@ run_meta_data_extraction(file_path)
 #textClass_dwds1sub=Historiographie
 ```
 
-### Vorverarbeitung der Daten mit multiprocessing (WIP)
+### Vorverarbeitung der Daten mit multiprocessing
 Die DTA Input Daten in einem Verzeichnis können parallel verarbeitet werden. Für mögliche Optionen des Skripts, siehe:
 ```bash
 python3 process_documents.py --help
 ```
-Ausführung des Skripts:
-```bash
-python3 process_documents.py your/input/directory /your/output/directory
-```
-TODO: Vorverarbeitungsskripte der anderen Gruppen anbinden.
 
+Ausführung der gesamten Vorverarbeitungspipeline:
+```bash
+./preprocess_data.sh
+```
+Konfigurationsparameter (Anzahl Items, Pfade zu Input-/Output-Dateien) können in den entsprechenden Variablen des Skripts gesetzt werden.
+
+**Hinweis**:  
+Für die Fortschrittsanzeige bei Generierung der Items wird in [item_generation.py](item_generation.py)
+[tqdm](https://tqdm.github.io/docs/tqdm/) verwendet. Das Tool wird automatisch bei Ausführung des Skripts via pip3 installiert.
+Falls dies nicht gewünscht sein sollte, kann Z. 3 in [preprocess_data.sh](preprocess_data.sh) auskommentiert werden.
 
 # Gruppe 
 - Maurice Vogel

@@ -5,6 +5,7 @@ import argparse
 import multiprocessing as mp
 import os
 import pickle
+import random
 import sys
 from enum import Enum
 
@@ -101,6 +102,22 @@ if __name__ == "__main__":
         help="Number of items to generate per fod file.",
     )
 
+
+    parser.add_argument(
+        "--max_len_sent_target",
+        type=int,
+        default=5,
+        help="Maximum token length for sentence with a target (used as filter).",
+    )
+
+
+    parser.add_argument(
+        "--max_sampling_steps",
+        type=int,
+        default=1000,
+        help="How many samples will be drawn for target before next target is processed.",
+    )
+
     args = parser.parse_args()
 
     with mp.Pool(processes=args.num_processes) as pool:
@@ -183,6 +200,15 @@ if __name__ == "__main__":
                 args.items_per_fod
             except NameError:
                 print("Please define the number of items per fod file.")
+            try:
+                args.max_len_sent_target
+            except NameError:
+                print("Please define the maximum target sentence length.")
+            try:
+                args.max_sampling_steps
+            except NameError:
+                print("Please define the maximum number of sampling steps per target.")
+
 
             with open(args.items, "r", encoding="utf-8") as f:
                 items = f.readlines()
@@ -210,21 +236,33 @@ if __name__ == "__main__":
                     args.min_e2,
                     args.min_e4,
                     args.min_e2_e4,
+                    args.max_len_sent_target,
+                    args.max_sampling_steps
                 )
+
+
+                # shuffle items per file
+                number_of_items = len(items)
+                for step, i in enumerate(range(0, len(results_list), number_of_items)):
+                    items_shuffled = results_list[i:(step+1)*number_of_items]
+                    random.shuffle(items_shuffled)
+                    results_list[i:(step+1)*number_of_items] = items_shuffled
+
+
                 # # flatten sentence pairs tuples (expected input for fods_builder)
-                # results_flattened = []
-                # for sentence_pair in results_list:
-                #     sent1 = sentence_pair[0]
-                #     sent2 = sentence_pair[1]
-                #     results_flattened.append(sent1)
-                #     results_flattened.append(sent2)
+                results_flattened = []
+                for sentence_pair in results_list:
+                    sent1 = sentence_pair[0]
+                    sent2 = sentence_pair[1]
+                    results_flattened.append(sent1)
+                    results_flattened.append(sent2)
 
                 path_output_pickle_sents_pairwise = os.path.join(
                     args.output_directory, "sents_pairwise.pkl"
                 )
                 with open(path_output_pickle_sents_pairwise, "wb") as f:
-                    pickle.dump(results_list, f)
-                fods_builder(results_list, args.output_directory, args.items_per_fod)
+                    pickle.dump(results_flattened, f)
+                fods_builder(results_flattened, args.output_directory, args.items_per_fod)
             except Exception as e:
                 print(e)
         else:

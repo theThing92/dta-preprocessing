@@ -23,13 +23,18 @@ mkdir -p $OUTPUT_DIR_FODS
 # path to item file (one item per line, no newline at end of file)
 ITEMS="data/items/items.txt"
 # window size for context extraction
-WINDOW_SIZE=50
+WINDOW_SIZE=80
 # minimum number of items per target and epoch
-MIN_ITEMS_E2=15 # default: 15
-MIN_ITEMS_E4=15 # default: 15
-MIN_ITEMS_E2_E4=30 # default: 30
+MIN_ITEMS_E2=5 # default: 15
+MIN_ITEMS_E4=5 # default: 15
+MIN_ITEMS_E2_E4=10 # default: 30
 # number of items per fod file
 NUM_ITEMS_PER_FOD=5 # default: 5
+# maximum token length of target sentence (used as filter)
+MAX_LEN_SENT_TARGET=30
+# maximum number of sampling operations for the given input corpus
+# if not enough items can be sampled, the next item will be processed
+MAX_SAMPLING_STEPS=1000
 
 # args process_documents.py input_directory output_directory function
 # execute preprocessing pipeline
@@ -42,4 +47,4 @@ python3 process_documents.py $OUTPUT_DIR_META $OUTPUT_DIR_EPOCHS epochs -n $NUM_
 # step 4: generate documents pairs for epochs E2, E4 and E2+E4
 python3 process_documents.py $OUTPUT_DIR_EPOCHS $OUTPUT_DIR_DOCS_PAIRWISE docs_pairwise -n $NUM_CORES
 # step 5: generate test item sentence pairs and write them into fod files
-python3 process_documents.py $OUTPUT_DIR_DOCS_PAIRWISE $OUTPUT_DIR_FODS sents_pairwise -i $ITEMS -w $WINDOW_SIZE -n $NUM_CORES --min_e2 $MIN_ITEMS_E2 --min_e4 $MIN_ITEMS_E4 --min_e2_e4 $MIN_ITEMS_E2_E4 --dir_csv_files $OUTPUT_DIR_ANNOTATIONS --items_per_fod $NUM_ITEMS_PER_FOD
+python3 process_documents.py $OUTPUT_DIR_DOCS_PAIRWISE $OUTPUT_DIR_FODS sents_pairwise -i $ITEMS -w $WINDOW_SIZE -n $NUM_CORES --min_e2 $MIN_ITEMS_E2 --min_e4 $MIN_ITEMS_E4 --min_e2_e4 $MIN_ITEMS_E2_E4 --dir_csv_files $OUTPUT_DIR_ANNOTATIONS --items_per_fod $NUM_ITEMS_PER_FOD --max_len_sent_target $MAX_LEN_SENT_TARGET --max_sampling_steps $MAX_SAMPLING_STEPS

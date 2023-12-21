@@ -1,0 +1,5 @@
+Epoch: 2, Text: ['rabener_sammlung03_1752', 'bengel_abriss01_1751', 'lettus_chronik02_1753']
+Epoch: 4, Text: ['peschel_voelkerkunde_1874', 'mohl_staatswissenschaften_1859', 'mommsen_roemische03_1856']
+Epoch: 3, Text: ['paul_flegeljahre03_1804', 'rueckert_brahmane04_1838', 'davidis_kochbuch_1849', 'hundtradowsky_judenschule01_1822']
+Epoch: unclassified, Text: ['dannhauer_catechismus04_1653', 'weigel_gnothi_1615']
+Epoch: 1, Text: ['brockes_vergnuegen03_1730']
