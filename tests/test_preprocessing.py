@@ -2,11 +2,11 @@
 import glob
 import unittest
 
-# Pip
-# None
-
 # Custom
 from preprocessing import run_meta_data_extraction
+
+# Pip
+# None
 
 
 class TestXMLDataExtraction(unittest.TestCase):

@@ -3,6 +3,7 @@
 import random
 import sys
 import traceback
+from itertools import islice
 
 import preprocessing_item_generation as TG
 
@@ -83,6 +84,18 @@ def generate_items_pandas(
     assert window_size % 2 == 0, "Please define an even window_size."
     index_before_after = int(window_size / 2)
 
+    def get_token_number(df: pd.DataFrame):
+        if isinstance(df, pd.DataFrame) and not df.empty:
+            return len(df[~df["POS"].isin(pos_tags_to_skip)])
+        return 0
+
+    def get_df_with_tokens(df: pd.DataFrame, df_orig: pd.DataFrame):
+        if isinstance(df, pd.DataFrame) and not df.empty:
+            start_index = df.index.values[0]
+            end_index = df.index.values[-1]
+            return df_orig[start_index:end_index]
+        return ""
+
     if _TQDM_AVAILABLE:
         items = tqdm(items)
     for item in items:
@@ -91,44 +104,50 @@ def generate_items_pandas(
 
         counter = 0
         while (
-            len(generated_items_tmp["E2"]) != num_items_e2
-            and len(generated_items_tmp["E4"]) != num_items_e4
-            and len(generated_items_tmp["E2_E4"]) != num_items_e2_e4
-        ) or counter <= max_sampling_steps:
+            not (
+                len(generated_items_tmp["E2"]) == num_items_e2
+                and len(generated_items_tmp["E4"]) == num_items_e4
+                and len(generated_items_tmp["E2_E4"]) == num_items_e2_e4
+            )
+        ) and counter < max_sampling_steps:
             counter += 1
+            print(f"Sampling step {counter} / {max_sampling_steps}.")
             epoch, csv_file_paths = random.choice(list(epoch_dict.items()))
             path_csv1, path_csv2 = random.choice(csv_file_paths)
 
             if path_csv1 not in csv_loaded:
                 df1 = pd.read_csv(path_csv1, delimiter="\t", encoding="utf-8")
+                df1_tokens_only = df1[~df1["POS"].isin(pos_tags_to_skip)]
                 csv_loaded[path_csv1] = df1
             else:
                 df1 = csv_loaded[path_csv1]
+                df1_tokens_only = df1[~df1["POS"].isin(pos_tags_to_skip)]
             if path_csv2 not in csv_loaded:
                 df2 = pd.read_csv(path_csv2, delimiter="\t", encoding="utf-8")
+                df2_tokens_only = df2[~df2["POS"].isin(pos_tags_to_skip)]
                 csv_loaded[path_csv2] = df2
             else:
                 df2 = csv_loaded[path_csv2]
+                df2_tokens_only = df2[~df2["POS"].isin(pos_tags_to_skip)]
 
             df1_only_rows_with_item = df1[df1["Corr_token"] == item]
             df2_only_rows_with_item = df2[df2["Corr_token"] == item]
             # TODO: add count for "skipping" punctuation for token count
             # generate sentence pairs + contexts
-            if (
-                len(df1_only_rows_with_item) > 0
-                and len(df2_only_rows_with_item) > 0
-            ):
+            if len(df1_only_rows_with_item) > 0 and len(df2_only_rows_with_item) > 0:
                 df1_only_rows_with_item = df1[df1["Corr_token"] == item].sample(1)
                 df2_only_rows_with_item = df2[df2["Corr_token"] == item].sample(1)
 
                 sent_id1 = df1_only_rows_with_item["Sent_ID"].values[0]
                 sent_id2 = df2_only_rows_with_item["Sent_ID"].values[0]
 
-                sent_len1 = len(df1[df1["Sent_ID"] == sent_id1])
-                sent_len2 = len(df2[df2["Sent_ID"] == sent_id2])
+                sent_len1 = get_token_number(df1[df1["Sent_ID"] == sent_id1])
+                sent_len2 = get_token_number(df2[df2["Sent_ID"] == sent_id2])
 
-                if sent_len1 <= max_len_sent_target and sent_len2 <= max_len_sent_target:
-
+                if (
+                    sent_len1 <= max_len_sent_target
+                    and sent_len2 <= max_len_sent_target
+                ):
                     i1 = df1_only_rows_with_item.index.values[0]
                     i2 = df2_only_rows_with_item.index.values[0]
                     try:
@@ -138,9 +157,9 @@ def generate_items_pandas(
                         start_idx_target_sent1 = target_sent1.index[0]
                         end_idx_target_sent1 = target_sent1.index[-1]
                         target_before_sent1 = df1.iloc[start_idx_target_sent1:i1]
-                        target_after_sent1 = df1.iloc[
-                            i1 + 1 : end_idx_target_sent1 + 1
-                        ]
+                        target_after_sent1 = df1.iloc[i1 + 1 : end_idx_target_sent1 + 1]
+                        # tokens_target_before_sent1 = get_token_number(target_before_sent1)
+                        # tokens_target_after_sent1 = get_token_number(target_after_sent1)
 
                         num_tokens_before_rest1 = index_before_after - (
                             i1 - start_idx_target_sent1
@@ -156,8 +175,7 @@ def generate_items_pandas(
                         # reason 1: target at beginning of document --> ad num_tokens_before_rest to post-context instead
                         if (
                             num_tokens_before_rest1 > 0
-                            and (start_idx_target_sent1 - num_tokens_before_rest1)
-                            <= 0
+                            and (start_idx_target_sent1 - num_tokens_before_rest1) <= 0
                         ):
                             context_before1 = ""  # df1[i+1:i+index_before_after+1]
                             context_after1 = df1[
@@ -210,21 +228,19 @@ def generate_items_pandas(
                         elif num_tokens_after_rest1 < 0 and context_after1.empty:
                             context_after1 = ""
 
-                        target2 = df2.iloc[i2: i2 + 1]
+                        target2 = df2.iloc[i2 : i2 + 1]
                         sent_id2 = target2["Sent_ID"].values[0]
                         target_sent2 = df2[df2["Sent_ID"] == sent_id2]
                         start_idx_target_sent2 = target_sent2.index[0]
                         end_idx_target_sent2 = target_sent2.index[-1]
                         target_before_sent2 = df2.iloc[start_idx_target_sent2:i2]
-                        target_after_sent2 = df2.iloc[
-                                             i2 + 1: end_idx_target_sent2 + 1
-                                             ]
+                        target_after_sent2 = df2.iloc[i2 + 1 : end_idx_target_sent2 + 1]
 
                         num_tokens_before_rest2 = index_before_after - (
-                                i2 - start_idx_target_sent2
+                            i2 - start_idx_target_sent2
                         )
                         num_tokens_after_rest2 = index_before_after - (
-                                end_idx_target_sent2 - i2
+                            end_idx_target_sent2 - i2
                         )
 
                         context_after2 = ""
@@ -233,57 +249,56 @@ def generate_items_pandas(
                         # not enough pre-context available
                         # reason 1: target at beginning of document --> ad num_tokens_before_rest to post-context instead
                         if (
-                                num_tokens_before_rest2 > 0
-                                and (start_idx_target_sent2 - num_tokens_before_rest2)
-                                <= 0
+                            num_tokens_before_rest2 > 0
+                            and (start_idx_target_sent2 - num_tokens_before_rest2) <= 0
                         ):
                             context_before2 = ""  # df1[i+1:i+index_before_after+1]
                             context_after2 = df2[
-                                             end_idx_target_sent2
-                                             + 1: end_idx_target_sent2
-                                                  + index_before_after
-                                                  + num_tokens_after_rest2
-                                                  + num_tokens_before_rest2
-                                                  + 1
-                                             ]
+                                end_idx_target_sent2
+                                + 1 : end_idx_target_sent2
+                                + index_before_after
+                                + num_tokens_after_rest2
+                                + num_tokens_before_rest2
+                                + 1
+                            ]
                         else:
                             context_before2 = df2[
-                                              start_idx_target_sent2
-                                              - num_tokens_before_rest2: start_idx_target_sent2
-                                              # + 1
-                                              ]
+                                start_idx_target_sent2
+                                - num_tokens_before_rest2 : start_idx_target_sent2
+                                # + 1
+                            ]
 
                         try:
                             if context_after2.empty:
                                 context_after2 = df2[
-                                                 end_idx_target_sent2
-                                                 + 1: end_idx_target_sent2
-                                                      + num_tokens_after_rest2
-                                                      + 1
-                                                 ]
+                                    end_idx_target_sent2
+                                    + 1 : end_idx_target_sent2
+                                    + num_tokens_after_rest2
+                                    + 1
+                                ]
                         except AttributeError:
                             context_after2 = df2[
-                                             end_idx_target_sent2
-                                             + 1: end_idx_target_sent2
-                                                  + num_tokens_after_rest2
-                                                  + 1
-                                             ]
+                                end_idx_target_sent2
+                                + 1 : end_idx_target_sent2
+                                + num_tokens_after_rest2
+                                + 1
+                            ]
 
                         # not enough post-context available
                         # reason 1: target at end of document --> ad num_tokens_after_rest to pre-context instead
                         if (
-                                num_tokens_after_rest2 > 0
-                                and (end_idx_target_sent2 + num_tokens_after_rest2)
-                                >= len(df2)
-                                and context_after2.empty
+                            num_tokens_after_rest2 > 0
+                            and (end_idx_target_sent2 + num_tokens_after_rest2)
+                            >= len(df2)
+                            and context_after2.empty
                         ):
                             context_after2 = ""  # df1[i+1:i+index_before_after+1]
                             context_before2 = df2[
-                                              start_idx_target_sent2
-                                              - index_before_after
-                                              - num_tokens_after_rest2
-                                              - num_tokens_before_rest2: start_idx_target_sent2  # +1
-                                              ]
+                                start_idx_target_sent2
+                                - index_before_after
+                                - num_tokens_after_rest2
+                                - num_tokens_before_rest2 : start_idx_target_sent2  # +1
+                            ]
                         # reason 2: post context longer than right side of context window
 
                         elif num_tokens_after_rest2 < 0 and context_after2.empty:
@@ -313,26 +328,31 @@ def generate_items_pandas(
                         item2_final = (item2, [path_csv2, item, sent_id2, epoch])
 
                         if (item1_final, item2_final) not in generated_items_tmp[epoch]:
-
                             if epoch == "E2":
                                 if len(generated_items_tmp[epoch]) < num_items_e2:
-                                    generated_items_tmp[epoch].append((item1_final, item2_final))
+                                    generated_items_tmp[epoch].append(
+                                        (item1_final, item2_final)
+                                    )
                                     print(
-                                        f"Unique item found in {path_csv2}, adding to list..."
+                                        f"Unique item found in {path_csv1} and {path_csv2}, adding to list..."
                                     )
 
                             elif epoch == "E4":
                                 if len(generated_items_tmp[epoch]) < num_items_e4:
-                                    generated_items_tmp[epoch].append((item1_final, item2_final))
+                                    generated_items_tmp[epoch].append(
+                                        (item1_final, item2_final)
+                                    )
                                     print(
-                                        f"Unique item found in {path_csv2}, adding to list..."
+                                        f"Unique item found in {path_csv1} and {path_csv2}, adding to list..."
                                     )
 
                             elif epoch == "E2_E4":
                                 if len(generated_items_tmp[epoch]) < num_items_e2_e4:
-                                    generated_items_tmp[epoch].append((item1_final, item2_final))
+                                    generated_items_tmp[epoch].append(
+                                        (item1_final, item2_final)
+                                    )
                                     print(
-                                        f"Unique item found in {path_csv2}, adding to list..."
+                                        f"Unique item found in {path_csv1} and {path_csv2}, adding to list..."
                                     )
 
                         else:
@@ -341,14 +361,18 @@ def generate_items_pandas(
 
                     except Exception as e:
                         print(
-                            f"An error occurred in row with indices {i1, i2}, skipping..."
+                            f"An error occurred in files {path_csv1} and {path_csv2} with row with indices {i1, i2}, skipping..."
                         )
                         if _PYTHON_VERSION[1] <= 8:
                             print(e)
                         else:
                             traceback.print_exception(e)
 
-            if len(generated_items_tmp["E2"]) == num_items_e2 and len(generated_items_tmp["E4"]) == num_items_e4 and len(generated_items_tmp["E2_E4"]) == num_items_e2_e4:
+            if (
+                len(generated_items_tmp["E2"]) == num_items_e2
+                and len(generated_items_tmp["E4"]) == num_items_e4
+                and len(generated_items_tmp["E2_E4"]) == num_items_e2_e4
+            ):
                 counter += max_sampling_steps
 
         e2_items_tmp_values = generated_items_tmp["E2"]
@@ -367,9 +391,13 @@ def generate_items_pandas(
 
         else:
             print("Not enough items found in at least one epoch, skipping item...")
-
     # process final item dict in parallel and write n item pairs sequentially to list, such that result list has format:
     # [item_1_1, item_2_1,... item_n_1, ... item_1_2, item2_2, .. item_n_2, ...]
+    # remove item keys for empty item lists
+    for k in list(generated_items.keys()):
+        if not generated_items[k]:
+            generated_items.pop(k)
+
     zip_list_values = list(zip(*generated_items.values()))
 
     results_flattened = []
@@ -675,7 +703,7 @@ if __name__ == "__main__":
 
     import pickle
 
-    items = ["und", "aber", "er", "sie", "es"]
+    items = ["und", "aber", "er", "sie", "es", "asfasfas"]
     path_docs_pairwise = "data/test/docs_pairwise/docs_pairwise.pkl"
     with open(path_docs_pairwise, "rb") as f:
         doc_pairwise = pickle.load(f)

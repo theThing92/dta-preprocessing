@@ -102,14 +102,12 @@ if __name__ == "__main__":
         help="Number of items to generate per fod file.",
     )
 
-
     parser.add_argument(
         "--max_len_sent_target",
         type=int,
         default=5,
         help="Maximum token length for sentence with a target (used as filter).",
     )
-
 
     parser.add_argument(
         "--max_sampling_steps",
@@ -209,7 +207,6 @@ if __name__ == "__main__":
             except NameError:
                 print("Please define the maximum number of sampling steps per target.")
 
-
             with open(args.items, "r", encoding="utf-8") as f:
                 items = f.readlines()
                 items = [i.replace("\n", "") for i in items]
@@ -237,17 +234,15 @@ if __name__ == "__main__":
                     args.min_e4,
                     args.min_e2_e4,
                     args.max_len_sent_target,
-                    args.max_sampling_steps
+                    args.max_sampling_steps,
                 )
-
 
                 # shuffle items per file
                 number_of_items = len(items)
                 for step, i in enumerate(range(0, len(results_list), number_of_items)):
-                    items_shuffled = results_list[i:(step+1)*number_of_items]
+                    items_shuffled = results_list[i : (step + 1) * number_of_items]
                     random.shuffle(items_shuffled)
-                    results_list[i:(step+1)*number_of_items] = items_shuffled
-
+                    results_list[i : (step + 1) * number_of_items] = items_shuffled
 
                 # # flatten sentence pairs tuples (expected input for fods_builder)
                 results_flattened = []
@@ -262,7 +257,9 @@ if __name__ == "__main__":
                 )
                 with open(path_output_pickle_sents_pairwise, "wb") as f:
                     pickle.dump(results_flattened, f)
-                fods_builder(results_flattened, args.output_directory, args.items_per_fod)
+                fods_builder(
+                    results_flattened, args.output_directory, args.items_per_fod
+                )
             except Exception as e:
                 print(e)
         else:

@@ -1,7 +1,6 @@
 # Standard
 from enum import Enum
 
-
 # Pip
 # None
 
