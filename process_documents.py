@@ -237,6 +237,11 @@ if __name__ == "__main__":
                     args.max_sampling_steps,
                 )
 
+                items = set()
+                for item_pair in results_list:
+                    items.add(item_pair[0][-1][-3])
+                    items.add(item_pair[1][-1][-3])
+
                 # shuffle items per file
                 number_of_items = len(items)
                 for step, i in enumerate(range(0, len(results_list), number_of_items)):
