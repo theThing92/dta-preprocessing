@@ -171,7 +171,7 @@ def fods_builder(
     # Obergrenze, nach der wir eine neue Datei aufmachen oder aufhören sollen
     treshold = pairs_per_file * 2 * file_no
     # Während die Obergrenze nicht über die Länge der Input-Liste hinausgeht, tue folgendes:
-    while treshold < (len(input_list) - 1):
+    while treshold < (len(input_list) - 1)+1:
         # Während wir aktuell unter der Obergrenze sind und unsere Obergrenze nicht zu weit über die
         # Länge der Liste hinausgeht...
         # (damit unser letztes File zwar kleiner als die anderen sein darf, aber nicht leer ist)

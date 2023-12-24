@@ -82,7 +82,7 @@ def generate_items_pandas(
     # save already loaded dataframes here
     csv_loaded = dict()
     assert window_size % 2 == 0, "Please define an even window_size."
-    index_before_after = int(window_size / 2)
+    tokens_before_after = int(window_size / 2)
 
     def get_token_number(df: pd.DataFrame):
         if isinstance(df, pd.DataFrame) and not df.empty:
@@ -130,202 +130,260 @@ def generate_items_pandas(
                 df2 = csv_loaded[path_csv2]
                 df2_tokens_only = df2[~df2["POS"].isin(pos_tags_to_skip)]
 
-            df1_only_rows_with_item = df1[df1["Corr_token"] == item]
-            df2_only_rows_with_item = df2[df2["Corr_token"] == item]
-            # TODO: add count for "skipping" punctuation for token count
+            df1_only_rows_with_item = df1_tokens_only[
+                df1_tokens_only["Lemma"] == item
+            ]
+            df2_only_rows_with_item = df2_tokens_only[
+                df2_tokens_only["Lemma"] == item
+            ]
+
             # generate sentence pairs + contexts
             if len(df1_only_rows_with_item) > 0 and len(df2_only_rows_with_item) > 0:
-                df1_only_rows_with_item = df1[df1["Corr_token"] == item].sample(1)
-                df2_only_rows_with_item = df2[df2["Corr_token"] == item].sample(1)
+                df1_sample_target = df1_tokens_only[
+                    df1_tokens_only["Lemma"] == item
+                ].sample(1)
+                df2_sample_target = df2_tokens_only[
+                    df2_tokens_only["Lemma"] == item
+                ].sample(1)
 
-                sent_id1 = df1_only_rows_with_item["Sent_ID"].values[0]
-                sent_id2 = df2_only_rows_with_item["Sent_ID"].values[0]
+                df1_target_sent_id = df1_sample_target["Sent_ID"].values[0]
+                df2_target_sent_id = df2_sample_target["Sent_ID"].values[0]
 
-                sent_len1 = get_token_number(df1[df1["Sent_ID"] == sent_id1])
-                sent_len2 = get_token_number(df2[df2["Sent_ID"] == sent_id2])
+                df1_target_sent_tokens = df1_tokens_only[
+                    df1_tokens_only["Sent_ID"] == df1_target_sent_id
+                ]
+                df1_target_sent_all = df1[df1["Sent_ID"] == df1_target_sent_id]
+                df2_target_sent_tokens = df2_tokens_only[
+                    df2_tokens_only["Sent_ID"] == df2_target_sent_id
+                ]
+                df2_target_sent_all = df2[df2["Sent_ID"] == df2_target_sent_id]
+
+                df1_target_num_tokens = len(df1_target_sent_tokens)
+                df2_target_num_tokens = len(df2_target_sent_tokens)
+
+                df1_index_target = df1_sample_target.index.values[0]
+                df2_index_target = df2_sample_target.index.values[0]
+                df1_index_target_pre_context_tokens = (
+                    df1_target_sent_tokens.index.values[0]
+                )
+                df2_index_target_pre_context_tokens = (
+                    df2_target_sent_tokens.index.values[0]
+                )
+                df1_index_target_pre_context_all = df1_target_sent_all.index.values[0]
+                df2_index_target_pre_context_all = df2_target_sent_all.index.values[0]
+                df1_index_target_post_context_tokens = (
+                    df1_target_sent_tokens.index.values[-1]
+                )
+                df2_index_target_post_context_tokens = (
+                    df2_target_sent_tokens.index.values[-1]
+                )
+                df1_index_target_post_context_all = df1_target_sent_all.index.values[-1]
+                df2_index_target_post_context_all = df2_target_sent_all.index.values[-1]
+
+                # TODO: fix indexing + move calculations out
+                df1_target_pre_context_tokens = df1_tokens_only.loc[
+                    df1_index_target_pre_context_tokens : df1_index_target - 1
+                ]
+                df1_target_pre_context_all = df1.loc[
+                    df1_index_target_pre_context_all : df1_index_target - 1
+                ]
+                df2_target_pre_context_tokens = df2_tokens_only.loc[
+                    df2_index_target_pre_context_tokens : df2_index_target - 1
+                ]
+                df2_target_pre_context_all = df2.loc[
+                    df2_index_target_pre_context_all : df2_index_target - 1
+                ]
+                df1_target_post_context_tokens = df1_tokens_only.loc[
+                    df1_index_target + 1 : df1_index_target_post_context_tokens + 1
+                ]
+                df1_target_post_context_all = df1.loc[
+                    df1_index_target + 1 : df1_index_target_post_context_all #+ 1
+                ]
+                df2_target_post_context_tokens = df2_tokens_only.loc[
+                    df2_index_target + 1 : df2_index_target_post_context_tokens + 1
+                ]
+                df2_target_post_context_all = df2.loc[
+                    df2_index_target + 1 : df2_index_target_post_context_all #+ 1
+                ]
+
+                df1_target_num_tokens_pre_context_tokens = len(
+                    df1_target_pre_context_tokens
+                )
+                df2_target_num_tokens_pre_context_tokens = len(
+                    df2_target_pre_context_tokens
+                )
+                df1_target_num_tokens_post_context_tokens = len(
+                    df1_target_post_context_tokens
+                )
+                df2_target_num_tokens_post_context_tokens = len(
+                    df2_target_post_context_tokens
+                )
+
+                df1_num_tokens_before = (
+                    tokens_before_after - df1_target_num_tokens_pre_context_tokens
+                )
+                df2_num_tokens_before = (
+                    tokens_before_after - df2_target_num_tokens_pre_context_tokens
+                )
+                df1_num_tokens_after = (
+                    tokens_before_after - df1_target_num_tokens_post_context_tokens
+                )
+                df2_num_tokens_after = (
+                    tokens_before_after - df2_target_num_tokens_post_context_tokens
+                )
 
                 if (
-                    sent_len1 <= max_len_sent_target
-                    and sent_len2 <= max_len_sent_target
+                    df1_target_num_tokens <= max_len_sent_target
+                    and df2_target_num_tokens <= max_len_sent_target
                 ):
-                    i1 = df1_only_rows_with_item.index.values[0]
-                    i2 = df2_only_rows_with_item.index.values[0]
+                    df1_context_before_tokens = df1_tokens_only.loc[
+                        df1_index_target_pre_context_tokens
+                        - df1_num_tokens_before : df1_index_target_pre_context_tokens
+                        - 1
+                    ]
+                    df2_context_before_tokens = df2_tokens_only.loc[
+                        df2_index_target_pre_context_tokens
+                        - df2_num_tokens_before : df2_index_target_pre_context_tokens
+                        - 1
+                    ]
+                    df1_context_after_tokens = df1_tokens_only.loc[
+                        df1_index_target_post_context_tokens
+                        + 1 : df1_index_target_post_context_tokens
+                        + 1
+                        + df1_num_tokens_after
+                    ]
+                    df2_context_after_tokens = df2_tokens_only.loc[
+                        df2_index_target_post_context_tokens
+                        + 1 : df2_index_target_post_context_tokens
+                        + 1
+                        + df2_num_tokens_after
+                    ]
+
                     try:
-                        target1 = df1.iloc[i1 : i1 + 1]
-                        sent_id1 = target1["Sent_ID"].values[0]
-                        target_sent1 = df1[df1["Sent_ID"] == sent_id1]
-                        start_idx_target_sent1 = target_sent1.index[0]
-                        end_idx_target_sent1 = target_sent1.index[-1]
-                        target_before_sent1 = df1.iloc[start_idx_target_sent1:i1]
-                        target_after_sent1 = df1.iloc[i1 + 1 : end_idx_target_sent1 + 1]
-                        # tokens_target_before_sent1 = get_token_number(target_before_sent1)
-                        # tokens_target_after_sent1 = get_token_number(target_after_sent1)
-
-                        num_tokens_before_rest1 = index_before_after - (
-                            i1 - start_idx_target_sent1
-                        )
-                        num_tokens_after_rest1 = index_before_after - (
-                            end_idx_target_sent1 - i1
-                        )
-
-                        context_after1 = ""
-                        context_before1 = ""
-
-                        # not enough pre-context available
-                        # reason 1: target at beginning of document --> ad num_tokens_before_rest to post-context instead
-                        if (
-                            num_tokens_before_rest1 > 0
-                            and (start_idx_target_sent1 - num_tokens_before_rest1) <= 0
-                        ):
-                            context_before1 = ""  # df1[i+1:i+index_before_after+1]
-                            context_after1 = df1[
-                                end_idx_target_sent1
-                                + 1 : end_idx_target_sent1
-                                + index_before_after
-                                + num_tokens_after_rest1
-                                + num_tokens_before_rest1
+                        if df1_context_before_tokens.empty:
+                            df1_context_before_tokens = ""
+                            df1_context_after_tokens = df1_tokens_only.loc[
+                                df1_index_target_post_context_tokens
+                                + 1 : df1_context_after_tokens.index.values[0]
+                                + window_size
                                 + 1
                             ]
-                        else:
-                            context_before1 = df1[
-                                start_idx_target_sent1
-                                - num_tokens_before_rest1 : start_idx_target_sent1
-                                # + 1
-                            ]
-
-                        try:
-                            if context_after1.empty:
-                                context_after1 = df1[
-                                    end_idx_target_sent1
-                                    + 1 : end_idx_target_sent1
-                                    + num_tokens_after_rest1
-                                    + 1
+                            df1_context_after_index_all = (
+                                df1_context_after_tokens.index.values[-1]
+                            )
+                            df1_context_after_all = df1.loc[
+                                df1_index_target_post_context_all
+                                + 1 : df1_context_after_index_all
+                            ]  # +?
+                            df1_context_before_all = df1_context_before_tokens
+                        elif df1_context_after_tokens.empty:
+                            df1_context_after_tokens = ""
+                            df1_context_before_tokens = df1_tokens_only.loc[
+                                df1_context_before_tokens.index.values[0]
+                                - window_size : df1_context_before_tokens.index.values[
+                                    0
                                 ]
-                        except AttributeError:
-                            context_after1 = df1[
-                                end_idx_target_sent1
-                                + 1 : end_idx_target_sent1
-                                + num_tokens_after_rest1
                                 + 1
+                            ]  # +1
+                            df1_context_before_index_all = (
+                                df1_context_before_tokens.index.values[0]
+                            )
+                            df1_context_before_all = df1.loc[
+                                df1_context_before_index_all:df1_index_target_pre_context_all
                             ]
-
-                        # not enough post-context available
-                        # reason 1: target at end of document --> ad num_tokens_after_rest to pre-context instead
-                        if (
-                            num_tokens_after_rest1 > 0
-                            and (end_idx_target_sent1 + num_tokens_after_rest1)
-                            >= len(df1)
-                            and context_after1.empty
-                        ):
-                            context_after1 = ""  # df1[i+1:i+index_before_after+1]
-                            context_before1 = df1[
-                                start_idx_target_sent1
-                                - index_before_after
-                                - num_tokens_after_rest1
-                                - num_tokens_before_rest1 : start_idx_target_sent1  # +1
-                            ]
-                        # reason 2: post context longer than right side of context window
-                        elif num_tokens_after_rest1 < 0 and context_after1.empty:
-                            context_after1 = ""
-
-                        target2 = df2.iloc[i2 : i2 + 1]
-                        sent_id2 = target2["Sent_ID"].values[0]
-                        target_sent2 = df2[df2["Sent_ID"] == sent_id2]
-                        start_idx_target_sent2 = target_sent2.index[0]
-                        end_idx_target_sent2 = target_sent2.index[-1]
-                        target_before_sent2 = df2.iloc[start_idx_target_sent2:i2]
-                        target_after_sent2 = df2.iloc[i2 + 1 : end_idx_target_sent2 + 1]
-
-                        num_tokens_before_rest2 = index_before_after - (
-                            i2 - start_idx_target_sent2
-                        )
-                        num_tokens_after_rest2 = index_before_after - (
-                            end_idx_target_sent2 - i2
-                        )
-
-                        context_after2 = ""
-                        context_before2 = ""
-
-                        # not enough pre-context available
-                        # reason 1: target at beginning of document --> ad num_tokens_before_rest to post-context instead
-                        if (
-                            num_tokens_before_rest2 > 0
-                            and (start_idx_target_sent2 - num_tokens_before_rest2) <= 0
-                        ):
-                            context_before2 = ""  # df1[i+1:i+index_before_after+1]
-                            context_after2 = df2[
-                                end_idx_target_sent2
-                                + 1 : end_idx_target_sent2
-                                + index_before_after
-                                + num_tokens_after_rest2
-                                + num_tokens_before_rest2
-                                + 1
-                            ]
+                            df1_context_after_all = df1_context_after_tokens
                         else:
-                            context_before2 = df2[
-                                start_idx_target_sent2
-                                - num_tokens_before_rest2 : start_idx_target_sent2
-                                # + 1
-                            ]
-
-                        try:
-                            if context_after2.empty:
-                                context_after2 = df2[
-                                    end_idx_target_sent2
-                                    + 1 : end_idx_target_sent2
-                                    + num_tokens_after_rest2
-                                    + 1
-                                ]
-                        except AttributeError:
-                            context_after2 = df2[
-                                end_idx_target_sent2
-                                + 1 : end_idx_target_sent2
-                                + num_tokens_after_rest2
+                            df1_context_before_index_all = (
+                                df1_context_before_tokens.index.values[0]
+                            )
+                            df1_context_after_index_all = (
+                                df1_context_after_tokens.index.values[-1]
+                            )
+                            df1_context_after_all = df1.iloc[
+                                df1_index_target_post_context_all
+                                + 1 : df1_context_after_index_all
                                 + 1
                             ]
-
-                        # not enough post-context available
-                        # reason 1: target at end of document --> ad num_tokens_after_rest to pre-context instead
-                        if (
-                            num_tokens_after_rest2 > 0
-                            and (end_idx_target_sent2 + num_tokens_after_rest2)
-                            >= len(df2)
-                            and context_after2.empty
-                        ):
-                            context_after2 = ""  # df1[i+1:i+index_before_after+1]
-                            context_before2 = df2[
-                                start_idx_target_sent2
-                                - index_before_after
-                                - num_tokens_after_rest2
-                                - num_tokens_before_rest2 : start_idx_target_sent2  # +1
+                            df1_context_before_all = df1.iloc[
+                                df1_context_before_index_all : df1_index_target_pre_context_all
                             ]
-                        # reason 2: post context longer than right side of context window
 
-                        elif num_tokens_after_rest2 < 0 and context_after2.empty:
-                            context_after2 = ""
+                        if df2_context_before_tokens.empty:
+                            df2_context_before_tokens = ""
+                            df2_context_after_tokens = df2_tokens_only.loc[
+                                df2_index_target_post_context_tokens
+                                + 1 : df2_context_after_tokens.index.values[0]
+                                + window_size
+                                + 1
+                            ]
+                            df2_context_after_index_all = (
+                                df2_context_after_tokens.index.values[-1]
+                            )
+                            df2_context_after_all = df2.loc[
+                                df2_index_target_post_context_all
+                                + 1 : df2_context_after_index_all
+                            ]  # +?
+                            df2_context_before_all = df2_context_before_tokens
+                        elif df2_context_after_tokens.empty:
+                            df2_context_after_tokens = ""
+                            df2_context_before_tokens = df2_tokens_only.loc[
+                                df2_context_before_tokens.index.values[0]
+                                - window_size : df2_context_before_tokens.index.values[
+                                    0
+                                ]
+                                + 1
+                            ]  # +1
+                            df2_context_before_index_all = (
+                                df2_context_before_tokens.index.values[0]
+                            )
+                            df2_context_before_all = df2.loc[
+                                df2_context_before_index_all:df2_index_target_pre_context_all
+                            ]
+                            df2_context_after_all = df2_context_after_tokens
+                        else:
+                            df2_context_before_index_all = (
+                                df2_context_before_tokens.index.values[0]
+                            )
+                            df2_context_after_index_all = (
+                                df2_context_after_tokens.index.values[-1]
+                            )
+                            df2_context_after_all = df2.iloc[
+                                df2_index_target_post_context_all
+                                + 1 : df2_context_after_index_all
+                                + 1
+                            ]
+                            df2_context_before_all = df2.iloc[
+                                df2_context_before_index_all:df2_index_target_pre_context_all
+                            ]
 
                         item1 = (
-                            context_before1,
-                            target_before_sent1,
-                            target1,
-                            target_after_sent1,
-                            context_after1,
+                            df1_context_before_all,
+                            df1_target_pre_context_all,
+                            df1_sample_target,
+                            df1_target_post_context_all,
+                            df1_context_after_all,
                         )
                         item1 = generate_item_tuple(*item1)
 
                         # add meta info
-                        item1_final = (item1, [path_csv1, item, sent_id1, epoch])
+                        item1_final = (
+                            item1,
+                            [path_csv1, item, df1_target_sent_id, epoch],
+                        )
                         item2 = (
-                            context_before2,
-                            target_before_sent2,
-                            target2,
-                            target_after_sent2,
-                            context_after2,
+                            df2_context_before_all,
+                            df2_target_pre_context_all,
+                            df2_sample_target,
+                            df2_target_post_context_all,
+                            df2_context_after_all,
                         )
                         item2 = generate_item_tuple(*item2)
 
                         # add meta info
-                        item2_final = (item2, [path_csv2, item, sent_id2, epoch])
+                        item2_final = (
+                            item2,
+                            [path_csv2, item, df2_target_sent_id, epoch],
+                        )
 
                         if (item1_final, item2_final) not in generated_items_tmp[epoch]:
                             if epoch == "E2":
@@ -361,7 +419,7 @@ def generate_items_pandas(
 
                     except Exception as e:
                         print(
-                            f"An error occurred in files {path_csv1} and {path_csv2} with row with indices {i1, i2}, skipping..."
+                            f"An error occurred in files {path_csv1} and {path_csv2} with row with indices {df1_index_target, df2_index_target}, skipping..."
                         )
                         if _PYTHON_VERSION[1] <= 8:
                             print(e)
