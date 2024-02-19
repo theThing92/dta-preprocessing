@@ -100,6 +100,28 @@ Für die Fortschrittsanzeige bei Generierung der Items wird in [item_generation.
 [tqdm](https://tqdm.github.io/docs/tqdm/) verwendet. Das Tool wird automatisch bei Ausführung des Skripts via pip3 installiert.
 Falls dies nicht gewünscht sein sollte, kann Z. 3 in [preprocess_data.sh](preprocess_data.sh) auskommentiert werden.
 
+### Evaluation
+#### Installation
+Zur Ausführung Skripts müssen zunächst folgende Python-Pakete installiert werden:
+```bash
+python3 -m pip install seaborn pandas # notwendig
+```
+#### Ausführen des Skripts
+Anschließend kann das Skript mit
+```bash
+python3 evaluation.py
+```
+gestartet werden. Für die Spearman Rang-Korrelation werden die Heatmaps per Default unter data/evaluation/plots/xxx
+abgelegt. Die Pfade für die Input-Ordner der einzelnen Gruppen und Output-Pfade für die Plot-Generierung können in der
+Main-Methode des Evaluationskripts definiert werden (s. Code-Snippet). 
+
+```python3
+if __name__ == "__main__":
+    scores = []
+    input_dirs = ["data/evaluation/fods/group_1", "data/evaluation/fods/group_2"]
+    OUTPUT_DIR_PLOTS_TEMPLATE = "data/evaluation/plots/{}"
+```
+
 # Gruppe 
 - Maurice Vogel
 - Christopher Chandler 
