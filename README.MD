@@ -111,9 +111,9 @@ Anschließend kann das Skript mit
 ```bash
 python3 evaluation.py
 ```
-gestartet werden. Für die Spearman Rang-Korrelation werden die Heatmaps per Default unter data/evaluation/plots/xxx
-abgelegt. Die Pfade für die Input-Ordner der einzelnen Gruppen und Output-Pfade für die Plot-Generierung können in der
-Main-Methode des Evaluationskripts definiert werden (s. Code-Snippet). 
+gestartet werden. Für die Spearman Rang Korrelation werden die Heatmaps per Default unter 
+data/evaluation/plots/(group1, group2) abgelegt. Die Pfade für die Input-Ordner der einzelnen Gruppen und Output-Pfade
+für die Plot-Generierung können in der Main-Methode des Evaluationskripts definiert werden (s. Code-Snippet). 
 
 ```python3
 if __name__ == "__main__":
